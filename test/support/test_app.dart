@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:matontine/common/theme.dart';
 import 'package:matontine/data/app_database.dart';
@@ -23,7 +24,12 @@ void usePhone(WidgetTester tester) {
 
 /// The app on Friday 6 November 2026 (day 37 of the mockup's tontine), or on
 /// [now], with an in-memory database and a temporary documents folder.
-Widget testApp(Widget home, AppDatabase db, {DateTime? now}) {
+Widget testApp(
+  Widget home,
+  AppDatabase db, {
+  DateTime? now,
+  List<Override> overrides = const [],
+}) {
   final documents = Directory.systemTemp.createTempSync('matontine_test');
   addTearDown(() => documents.deleteSync(recursive: true));
   return ProviderScope(
@@ -31,6 +37,7 @@ Widget testApp(Widget home, AppDatabase db, {DateTime? now}) {
       appDatabaseProvider.overrideWithValue(db),
       clockProvider.overrideWithValue(() => now ?? DateTime(2026, 11, 6, 10)),
       documentsDirectoryProvider.overrideWithValue(documents),
+      ...overrides,
     ],
     child: MaterialApp(
       theme: appTheme(),

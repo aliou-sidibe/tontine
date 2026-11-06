@@ -11,6 +11,7 @@ import '../data/tontine_repository.dart';
 import '../domain/day.dart';
 import '../domain/tontine_terms.dart';
 import '../payout/payout_page.dart';
+import '../share/share_statement.dart';
 import 'swap_page.dart';
 
 enum TourStatus { done, current, next }
@@ -175,12 +176,7 @@ class ToursPage extends ConsumerWidget {
                   horizontal: 16,
                   vertical: 8,
                 ),
-                child: OutlinedButton.icon(
-                  // Wired in step 5 (partage PDF).
-                  onPressed: null,
-                  icon: const Icon(Icons.ios_share, size: 18),
-                  label: const Text('Partager l’état (PDF) sur WhatsApp'),
-                ),
+                child: _ShareButton(detail: detail, today: today),
               ),
             ],
           );
@@ -259,6 +255,46 @@ Future<void> _confirmCancelPayout(
         context,
       ).showSnackBar(const SnackBar(content: Text('Annulation impossible.')));
     }
+  }
+}
+
+/// "Partager l’état (PDF) sur WhatsApp": opens Android's share sheet with
+/// the statement, WhatsApp being one tap away.
+class _ShareButton extends ConsumerStatefulWidget {
+  const _ShareButton({required this.detail, required this.today});
+
+  final TontineDetail detail;
+  final Day today;
+
+  @override
+  ConsumerState<_ShareButton> createState() => _ShareButtonState();
+}
+
+class _ShareButtonState extends ConsumerState<_ShareButton> {
+  var _busy = false;
+
+  Future<void> _share() async {
+    setState(() => _busy = true);
+    try {
+      await shareStatement(ref, widget.detail, widget.today);
+    } catch (error, stack) {
+      logError(error, stack);
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(const SnackBar(content: Text('Partage impossible.')));
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return OutlinedButton.icon(
+      onPressed: _busy ? null : _share,
+      icon: const Icon(Icons.ios_share, size: 18),
+      label: const Text('Partager l’état (PDF) sur WhatsApp'),
+    );
   }
 }
 

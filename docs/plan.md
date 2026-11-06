@@ -246,6 +246,19 @@ Durées estimées pour un développeur seul. **Total : environ 3 à 5 semaines.*
 | 6 | Sauvegarde | Export / import chiffré, rappel | Une restauration sur un **autre** téléphone retrouve tout | 1–2 j |
 | 7 | Pilote | Une à deux semaines d'utilisation réelle, corrections | Plus de retour au cahier | 1–2 sem. |
 
+**Étape 5 (6 novembre 2026) :** développée et testée. Le bouton « Partager l'état (PDF) sur
+WhatsApp » de l'onglet Tours ouvre le menu de partage d'Android : WhatsApp est à un appui. Le PDF
+(A4, polices et couleurs de l'appli) contient :
+- l'en-tête : le nom de la tontine, « État au ven. 6 nov. 2026 · jour 37 sur 200 » ;
+- la carte du tour en cours (bénéficiaire, date de ramassage, réuni / attendu) ;
+- le nombre de membres en retard et le total ;
+- le tableau des membres (places, total versé, situation avec le badge de l'écran Aujourd'hui),
+  en retard d'abord ;
+- sur une nouvelle page, le calendrier des tours (Remis, En cours, À venir).
+
+Choix hors maquette (le PDF n'y figure pas) : ce que ton frère a avancé de sa poche n'apparaît pas
+dans le PDF, qui est destiné au groupe ; le fichier s'appelle `etat-<tontine>-<date>.pdf`.
+
 **Étape 4 (6 novembre 2026) :** développée et testée. Sont faits :
 - l'écran « Remise de la cagnotte » de la maquette, avec le calcul ligne par ligne et la liste des
   membres pour qui ton frère complète ;
@@ -274,8 +287,7 @@ enregistrés, jamais repris de l'écran. Choix hors maquette (la maquette montre
 Membres, Tours, Plus), l'écran « Aujourd'hui », la feuille de versement par appui long (avec
 « Annuler » juste après l'enregistrement), l'onglet Membres, la fiche membre avec l'annulation
 d'un versement par contre-écriture, et la réouverture de la dernière tontine au lancement.
-L'onglet Tours affiche déjà le calendrier ; son bouton « Partager l'état (PDF) » arrive à
-l'étape 5. Écarts à la maquette :
+L'onglet Tours affiche déjà le calendrier. Écarts à la maquette :
 - « Jour + retard » affiche le vrai total dû (15 000 F pour Awa, jour du jour compris), et non
   les 20 000 F de la maquette, qui l'auraient mise en avance ;
 - sur « Aujourd'hui », un appui simple ne fait rien ; dans l'onglet Membres, il ouvre la fiche ;
