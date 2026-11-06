@@ -1,0 +1,6 @@
+# Copier vers android/key.properties (ignoré par Git) et remplir.
+# Garder la clé et son mot de passe hors du dépôt, avec au moins deux copies.
+storeFile=/chemin/absolu/hors/du/depot/ma-tontine.jks
+storePassword=
+keyAlias=ma-tontine
+keyPassword=

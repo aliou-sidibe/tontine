@@ -1,0 +1,142 @@
+import 'tontine_terms.dart';
+
+/// A member's holding and payments, as needed by the calculations.
+class MemberAccount {
+  const MemberAccount({
+    required this.id,
+    required this.halves,
+    required this.paid,
+  });
+
+  final String id;
+
+  /// Half places held across all tours (2 = one place).
+  final int halves;
+
+  /// Payments not cancelled, plus amounts already withheld.
+  final int paid;
+}
+
+/// One beneficiary share of a tour: a full place, or one of two halves.
+class TourShare {
+  const TourShare({required this.memberId, required this.halves});
+
+  final String memberId;
+
+  /// 2 for a full place, 1 for a half place.
+  final int halves;
+}
+
+/// The "Remise de la cagnotte" lines for one beneficiary share.
+class PayoutBreakdown {
+  const PayoutBreakdown({
+    required this.memberId,
+    required this.pot,
+    required this.collected,
+    required this.organizerTopUp,
+    required this.withheld,
+  });
+
+  final String memberId;
+
+  /// "Cagnotte du tour": the whole pot, or half of it for a half place.
+  final int pot;
+
+  /// "Versé par les membres": the part of the pot members actually paid.
+  final int collected;
+
+  /// "Tu complètes de ta poche": other members' shortfall on this tour.
+  final int organizerTopUp;
+
+  /// "Retenue": the beneficiary's own arrears through the tour's last day.
+  final int withheld;
+
+  /// "À remettre".
+  int get handed => pot - withheld;
+}
+
+/// What each beneficiary of [tour] receives, given every member's account.
+///
+/// Members who are short on this tour are topped up by the organizer; a
+/// beneficiary who is short has all his arrears withheld instead, which also
+/// repays the organizer for earlier tours.
+List<PayoutBreakdown> computePayout(
+  TontineTerms terms, {
+  required int tour,
+  required List<TourShare> shares,
+  required List<MemberAccount> members,
+}) {
+  final halvesInTour = shares.fold<int>(0, (sum, s) => sum + s.halves);
+  if (halvesInTour != halvesPerPlace) {
+    throw ArgumentError('A tour holds one place: one full or two halves.');
+  }
+  final beneficiaryIds = shares.map((s) => s.memberId).toSet();
+  final byId = {for (final m in members) m.id: m};
+
+  int shortfall(MemberAccount m) =>
+      terms.dailyDue(m.halves) * terms.tourDays -
+      terms.collectedForTour(m.halves, m.paid, tour);
+
+  var othersShortfall = 0;
+  for (final m in members) {
+    if (!beneficiaryIds.contains(m.id)) othersShortfall += shortfall(m);
+  }
+
+  final lastDay = terms.lastDayOfTour(tour);
+  final result = <PayoutBreakdown>[];
+  var topUpLeft = othersShortfall;
+  for (var i = 0; i < shares.length; i++) {
+    final share = shares[i];
+    final member = byId[share.memberId];
+    if (member == null) {
+      throw ArgumentError('Unknown beneficiary ${share.memberId}.');
+    }
+    final pot = terms.potPerTour * share.halves ~/ halvesPerPlace;
+    // The last share takes the remainder, so the halves add up exactly.
+    final topUp = i == shares.length - 1
+        ? topUpLeft
+        : othersShortfall * share.halves ~/ halvesPerPlace;
+    topUpLeft -= topUp;
+    final arrears = terms.dueThrough(member.halves, lastDay) - member.paid;
+    // Only the beneficiary's shortfall on this tour is missing from the pot;
+    // the rest of his arrears was already topped up on earlier tours.
+    final ownShortfall = shortfall(member) * share.halves ~/ member.halves;
+    result.add(
+      PayoutBreakdown(
+        memberId: share.memberId,
+        pot: pot,
+        collected: pot - topUp - ownShortfall,
+        organizerTopUp: topUp,
+        withheld: arrears > 0 ? arrears : 0,
+      ),
+    );
+  }
+  return result;
+}
+
+/// Progress of the current tour for the green card on "Aujourd'hui":
+/// collected so far against what was due through [today].
+({int collected, int expected}) tourProgress(
+  TontineTerms terms, {
+  required int tour,
+  required int today,
+  required List<MemberAccount> members,
+}) {
+  final first = terms.firstDayOfTour(tour);
+  final last = terms.lastDayOfTour(tour);
+  final through = today < first - 1 ? first - 1 : (today > last ? last : today);
+  var collected = 0;
+  var expected = 0;
+  for (final m in members) {
+    collected += terms.collectedForTour(
+      m.halves,
+      m.paid,
+      tour,
+      throughDay: through,
+    );
+    expected +=
+        terms.dueThrough(m.halves, through) -
+        terms.dueThrough(m.halves, first - 1);
+  }
+  return (collected: collected, expected: expected);
+}
