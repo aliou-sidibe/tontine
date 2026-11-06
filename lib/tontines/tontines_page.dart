@@ -7,13 +7,34 @@ import '../common/theme.dart';
 import '../common/widgets.dart';
 import '../creation/creation_page.dart';
 import '../data/tontine_repository.dart';
+import '../home/last_tontine.dart';
 
 /// "Mes tontines" (mockup board "Mes tontines").
-class TontinesPage extends ConsumerWidget {
+class TontinesPage extends ConsumerStatefulWidget {
   const TontinesPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<TontinesPage> createState() => _TontinesPageState();
+}
+
+class _TontinesPageState extends ConsumerState<TontinesPage> {
+  @override
+  void initState() {
+    super.initState();
+    // Reopen the tontine left open last time, if it still exists.
+    final last = ref.read(lastTontineStoreProvider).read();
+    if (last != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        final cards = await ref.read(tontineCardsProvider.future);
+        if (mounted && cards.any((c) => c.id == last)) {
+          await openTontine(context, ref, last);
+        }
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final cards = ref.watch(tontineCardsProvider);
     return Scaffold(
       body: SafeArea(
@@ -33,7 +54,10 @@ class TontinesPage extends ConsumerWidget {
             ),
             Expanded(
               child: cards.when(
-                data: (list) => _TontineList(cards: list),
+                data: (list) => _TontineList(
+                  cards: list,
+                  onOpen: (id) => openTontine(context, ref, id),
+                ),
                 loading: () => const Center(
                   child: CircularProgressIndicator(color: AppColors.primary),
                 ),
@@ -73,7 +97,7 @@ class TontinesPage extends ConsumerWidget {
                       ),
                       Expanded(
                         child: OutlinedButton(
-                          onPressed: () => _showAccount(context, ref),
+                          onPressed: () => _showAccount(context),
                           child: const Text('Mon compte'),
                         ),
                       ),
@@ -88,7 +112,7 @@ class TontinesPage extends ConsumerWidget {
     );
   }
 
-  void _showAccount(BuildContext context, WidgetRef ref) {
+  void _showAccount(BuildContext context) {
     showModalBottomSheet<void>(
       context: context,
       backgroundColor: AppColors.surface,
@@ -130,9 +154,10 @@ class TontinesPage extends ConsumerWidget {
 }
 
 class _TontineList extends StatelessWidget {
-  const _TontineList({required this.cards});
+  const _TontineList({required this.cards, required this.onOpen});
 
   final List<TontineCard> cards;
+  final ValueChanged<String> onOpen;
 
   @override
   Widget build(BuildContext context) {
@@ -153,7 +178,7 @@ class _TontineList extends StatelessWidget {
         for (final card in running)
           Padding(
             padding: const EdgeInsets.only(bottom: 12),
-            child: RunningCard(card: card),
+            child: RunningCard(card: card, onTap: () => onOpen(card.id)),
           ),
         if (finished.isNotEmpty) ...[
           const SizedBox(height: 8),
@@ -162,7 +187,7 @@ class _TontineList extends StatelessWidget {
           for (final card in finished)
             Padding(
               padding: const EdgeInsets.only(bottom: 12),
-              child: FinishedCard(card: card),
+              child: FinishedCard(card: card, onTap: () => onOpen(card.id)),
             ),
         ],
       ],
@@ -172,9 +197,10 @@ class _TontineList extends StatelessWidget {
 
 /// White card, radius 16, padding 16, border #E3E7E4.
 class _Card extends StatelessWidget {
-  const _Card({required this.gap, required this.children});
+  const _Card({required this.gap, required this.children, this.onTap});
 
   final double gap;
+  final VoidCallback? onTap;
   final List<Widget> children;
 
   @override
@@ -187,8 +213,7 @@ class _Card extends StatelessWidget {
       ),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
-        // Opens "Aujourd'hui" from step 3 on.
-        onTap: null,
+        onTap: onTap,
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -213,9 +238,10 @@ String beneficiaryLine(TontineCard card) {
 }
 
 class RunningCard extends StatelessWidget {
-  const RunningCard({super.key, required this.card});
+  const RunningCard({super.key, required this.card, this.onTap});
 
   final TontineCard card;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -223,6 +249,7 @@ class RunningCard extends StatelessWidget {
     final terms = card.terms;
     final progress = (o.dayNumber / terms.totalDays).clamp(0.0, 1.0);
     return _Card(
+      onTap: onTap,
       gap: 10,
       children: [
         Row(
@@ -298,15 +325,17 @@ class RunningCard extends StatelessWidget {
 }
 
 class FinishedCard extends StatelessWidget {
-  const FinishedCard({super.key, required this.card});
+  const FinishedCard({super.key, required this.card, this.onTap});
 
   final TontineCard card;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final o = card.overview;
     final terms = card.terms;
     return _Card(
+      onTap: onTap,
       gap: 6,
       children: [
         Row(

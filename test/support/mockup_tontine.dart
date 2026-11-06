@@ -63,19 +63,28 @@ Future<String> seedMockupTontine(AppDatabase db) async {
   for (final s in slots) {
     halves[s.memberId] = (halves[s.memberId] ?? 0) + s.halves;
   }
+  // The late members paid nothing today; everyone else paid through
+  // yesterday, then today's contribution this morning.
+  Future<void> pay(String memberId, int amount, String day) => db
+      .into(db.payments)
+      .insert(
+        PaymentsCompanion.insert(
+          tontineId: id,
+          memberId: memberId,
+          amount: amount,
+          method: PaymentMethod.cash,
+          paidOn: day,
+        ),
+      );
   for (final m in members) {
-    final days = _daysPaid[m.name] ?? 37;
-    await db
-        .into(db.payments)
-        .insert(
-          PaymentsCompanion.insert(
-            tontineId: id,
-            memberId: m.id,
-            amount: exampleTerms.dailyDue(halves[m.id]!) * days,
-            method: PaymentMethod.cash,
-            paidOn: '2026-11-06',
-          ),
-        );
+    final daily = exampleTerms.dailyDue(halves[m.id]!);
+    final late = _daysPaid[m.name];
+    if (late != null) {
+      await pay(m.id, daily * late, '2026-11-04');
+    } else {
+      await pay(m.id, daily * 36, '2026-11-05');
+      await pay(m.id, daily, '2026-11-06');
+    }
   }
   for (final slot in slots.where((s) => s.tour <= 3)) {
     await db

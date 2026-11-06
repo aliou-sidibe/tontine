@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -25,7 +27,12 @@ void main() {
     await tester.pumpWidget(
       _app(
         const TontinesPage(),
-        overrides: [appDatabaseProvider.overrideWithValue(db)],
+        overrides: [
+          appDatabaseProvider.overrideWithValue(db),
+          documentsDirectoryProvider.overrideWithValue(
+            Directory.systemTemp.createTempSync('matontine_test'),
+          ),
+        ],
       ),
     );
     await tester.pumpAndSettle();

@@ -40,6 +40,9 @@ String formatDay(Day day, {bool withYear = false}) {
   return withYear ? '$text ${day.year}' : text;
 }
 
+/// `10 nov.`: without the weekday, as in "ramasse le 10 nov.".
+String formatDayShort(Day day) => '${day.day} ${_months[day.month - 1]}';
+
 /// `1 place`, `2 places`, `½ place`, `1 place ½`.
 String formatPlaces(int halves) {
   final whole = halves ~/ 2;

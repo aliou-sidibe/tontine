@@ -540,12 +540,18 @@ class TourRow extends StatelessWidget {
     required this.who,
     required this.date,
     this.handle,
+    this.trailing,
   });
 
   final int number;
   final String who;
   final String date;
+
+  /// Drag handle of the order step (44 px, so the row's right padding is 4).
   final Widget? handle;
+
+  /// Status badge of the calendar.
+  final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {
@@ -584,6 +590,7 @@ class TourRow extends StatelessWidget {
             ),
           ),
           ?handle,
+          ?trailing,
         ],
       ),
     );

@@ -246,6 +246,18 @@ Durées estimées pour un développeur seul. **Total : environ 3 à 5 semaines.*
 | 6 | Sauvegarde | Export / import chiffré, rappel | Une restauration sur un **autre** téléphone retrouve tout | 1–2 j |
 | 7 | Pilote | Une à deux semaines d'utilisation réelle, corrections | Plus de retour au cahier | 1–2 sem. |
 
+**Étape 3 (6 novembre 2026) :** développée et testée. Sont faits : la barre du bas (Aujourd'hui,
+Membres, Tours, Plus), l'écran « Aujourd'hui », la feuille de versement par appui long (avec
+« Annuler » juste après l'enregistrement), l'onglet Membres, la fiche membre avec l'annulation
+d'un versement par contre-écriture, et la réouverture de la dernière tontine au lancement.
+L'onglet Tours affiche déjà le calendrier ; ses boutons « Échanger deux tours » et « Partager
+l'état (PDF) » arrivent aux étapes 4 et 5. Écarts à la maquette :
+- « Jour + retard » affiche le vrai total dû (15 000 F pour Awa, jour du jour compris), et non
+  les 20 000 F de la maquette, qui l'auraient mise en avance ;
+- sur « Aujourd'hui », un appui simple ne fait rien ; dans l'onglet Membres, il ouvre la fiche ;
+- quand ton frère n'a rien avancé, la tuile « Avancé par toi » passe en blanc avec « rien à
+  récupérer ».
+
 **Étape 2 (6 novembre 2026) :** développée et testée. Sont faits : « Mes tontines » avec les
 cartes de la maquette, et « Nouvelle tontine » en 4 écrans (Paramètres, Membres, Ordre avec
 glisser et tirage au sort, Récap), enregistrés d'un bloc. Deux choix hors maquette :

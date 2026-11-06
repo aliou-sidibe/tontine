@@ -1,43 +1,16 @@
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:matontine/common/theme.dart';
 import 'package:matontine/creation/creation_page.dart';
 import 'package:matontine/creation/creation_state.dart';
 import 'package:matontine/data/app_database.dart';
-import 'package:matontine/data/providers.dart';
 import 'package:matontine/tontines/tontines_page.dart';
 
 import '../support/mockup_tontine.dart';
+import '../support/test_app.dart';
 
-/// The mockup writes amounts with spaces; the app puts non-breaking ones
-/// inside amounts only ("5 000 F"), not between words.
-String nb(String text) => text
-    .replaceAllMapped(RegExp(r'(\d) (?=\d{3}\b)'), (m) => '${m[1]}\u00A0')
-    .replaceAllMapped(RegExp(r'(\d) F\b'), (m) => '${m[1]}\u00A0F');
-
-/// A phone the size of the mockup frames (390 × 844).
-void usePhone(WidgetTester tester) {
-  tester.view.physicalSize = const Size(390, 844) * 3;
-  tester.view.devicePixelRatio = 3;
-  addTearDown(tester.view.reset);
-}
-
-Widget app(Widget home, AppDatabase db) => ProviderScope(
-  overrides: [
-    appDatabaseProvider.overrideWithValue(db),
-    clockProvider.overrideWithValue(() => DateTime(2026, 11, 6, 10)),
-  ],
-  child: MaterialApp(
-    theme: appTheme(),
-    locale: const Locale('fr'),
-    supportedLocales: const [Locale('fr')],
-    localizationsDelegates: GlobalMaterialLocalizations.delegates,
-    home: home,
-  ),
-);
+Widget app(Widget home, AppDatabase db) => testApp(home, db);
 
 void main() {
   late AppDatabase db;
