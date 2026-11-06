@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
+import 'package:matontine/common/logo.dart';
 import 'package:matontine/auth/auth_pages.dart';
 import 'package:matontine/auth/session.dart';
 import 'package:matontine/common/theme.dart';
@@ -61,6 +62,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Créer le compte'), findsWidgets);
+    expect(find.byType(AppLogo), findsOneWidget);
+    expect(find.text('Restaurer une sauvegarde'), findsOneWidget);
     expect(find.text('Mes tontines'), findsNothing);
   });
 
@@ -77,6 +80,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Connexion'), findsOneWidget);
+    expect(find.byType(AppLogo), findsOneWidget);
     expect(find.text('Mot de passe oublié'), findsOneWidget);
   });
 }

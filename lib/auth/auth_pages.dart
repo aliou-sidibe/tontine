@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../backup/backup_page.dart';
 import '../common/errors.dart';
+import '../common/logo.dart';
 import '../common/password_field.dart';
 import '../common/theme.dart';
 import 'auth_service.dart';
@@ -499,6 +500,10 @@ class _AuthScaffold extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             spacing: 4,
                             children: [
+                              const Padding(
+                                padding: EdgeInsets.only(bottom: 18),
+                                child: AppLogo(),
+                              ),
                               const Text('Ma Tontine', style: AppText.caption),
                               Text(title, style: AppText.homeTitle),
                             ],
@@ -506,7 +511,12 @@ class _AuthScaffold extends StatelessWidget {
                         ),
                         for (final child in children)
                           Padding(
-                            padding: const EdgeInsets.only(bottom: 12),
+                            // The main button stands apart from the fields
+                            // above it: 24 px instead of 12.
+                            padding: EdgeInsets.only(
+                              top: child is FilledButton ? 12 : 0,
+                              bottom: 12,
+                            ),
                             child: child,
                           ),
                       ],
