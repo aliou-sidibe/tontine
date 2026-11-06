@@ -93,6 +93,56 @@ void main() {
     expect(payouts.fold<int>(0, (s, p) => s + p.collected), 1000000 - 17500);
   });
 
+  test('a beneficiary with two places: his whole shortfall is missing', () {
+    // Mariam holds 2 places and collects tour 5; she is 20 000 F short on
+    // it (2 days of her 10 000 F), everyone else paid through day 50.
+    final members = [
+      for (final m in exampleMembersOnDay37())
+        MemberAccount(
+          id: m.id,
+          halves: m.halves,
+          paid:
+              exampleTerms.dueThrough(m.halves, 50) -
+              (m.id == 'mariam' ? 20000 : 0),
+        ),
+    ];
+    final payout = computePayout(
+      exampleTerms,
+      tour: 5,
+      shares: const [TourShare(memberId: 'mariam', halves: 2)],
+      members: members,
+    ).single;
+
+    expect(payout.organizerTopUp, 0);
+    expect(payout.withheld, 20000);
+    expect(payout.collected, 1000000 - 20000);
+    expect(payout.handed, 980000);
+  });
+
+  test('the withholding never exceeds the pot', () {
+    // Mariam (2 places) paid nothing and collects tour 14: her arrears
+    // (1 400 000 F) are more than the pot. The rest stays owed.
+    final members = [
+      for (final m in exampleMembersOnDay37())
+        MemberAccount(
+          id: m.id,
+          halves: m.halves,
+          paid: m.id == 'mariam' ? 0 : exampleTerms.dueThrough(m.halves, 140),
+        ),
+    ];
+    final payout = computePayout(
+      exampleTerms,
+      tour: 14,
+      shares: const [TourShare(memberId: 'mariam', halves: 2)],
+      members: members,
+    ).single;
+
+    expect(payout.withheld, 1000000);
+    expect(payout.arrears, 1400000);
+    expect(payout.handed, 0);
+    expect(payout.collected, greaterThanOrEqualTo(0));
+  });
+
   test('a tour must hold exactly one place', () {
     expect(
       () => computePayout(

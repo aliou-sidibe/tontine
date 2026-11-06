@@ -35,6 +35,7 @@ class PayoutBreakdown {
     required this.collected,
     required this.organizerTopUp,
     required this.withheld,
+    required this.arrears,
   });
 
   final String memberId;
@@ -48,8 +49,13 @@ class PayoutBreakdown {
   /// "Tu complètes de ta poche": other members' shortfall on this tour.
   final int organizerTopUp;
 
-  /// "Retenue": the beneficiary's own arrears through the tour's last day.
+  /// "Retenue": the beneficiary's own arrears through the tour's last day,
+  /// at most the pot.
   final int withheld;
+
+  /// The beneficiary's whole arrears through the tour's last day. More than
+  /// [withheld] only when they exceed the pot.
+  final int arrears;
 
   /// "À remettre".
   int get handed => pot - withheld;
@@ -99,15 +105,19 @@ List<PayoutBreakdown> computePayout(
     topUpLeft -= topUp;
     final arrears = terms.dueThrough(member.halves, lastDay) - member.paid;
     // Only the beneficiary's shortfall on this tour is missing from the pot;
-    // the rest of his arrears was already topped up on earlier tours.
-    final ownShortfall = shortfall(member) * share.halves ~/ member.halves;
+    // the rest of his arrears was already topped up on earlier tours. All of
+    // it, even when he holds several places: they all pay into this pot.
+    final ownShortfall = shortfall(member);
     result.add(
       PayoutBreakdown(
         memberId: share.memberId,
         pot: pot,
         collected: pot - topUp - ownShortfall,
         organizerTopUp: topUp,
-        withheld: arrears > 0 ? arrears : 0,
+        // A member with several places may owe more than his pot: the
+        // withholding stops at the pot, the rest stays owed.
+        withheld: arrears <= 0 ? 0 : (arrears > pot ? pot : arrears),
+        arrears: arrears > 0 ? arrears : 0,
       ),
     );
   }

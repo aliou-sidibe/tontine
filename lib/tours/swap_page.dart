@@ -119,7 +119,10 @@ class _SwapPageState extends ConsumerState<SwapPage> {
                     separatorBuilder: (_, _) => const SizedBox(height: 6),
                     itemBuilder: (context, i) {
                       final e = entries[i];
-                      final done = e.status == TourStatus.done;
+                      // Even half handed out, a tour can no longer move.
+                      final done = detail
+                          .sharesOf(e.tour)
+                          .any((s) => detail.paidOutSlotIds.contains(s.id));
                       final chosen = _chosen.contains(e.tour);
                       return Semantics(
                         selected: chosen,

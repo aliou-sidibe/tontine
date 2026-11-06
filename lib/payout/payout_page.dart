@@ -337,9 +337,12 @@ class _Calculation extends StatelessWidget {
                   ? '− ${formatFcfa(b.withheld)}'
                   : formatFcfa(0),
               color: AppColors.text,
-              caption: b.withheld > 0
-                  ? '$firstName est remis à jour.'
-                  : '$firstName est à jour.',
+              caption: b.withheld == 0
+                  ? '$firstName est à jour.'
+                  : b.withheld < b.arrears
+                  ? '$firstName reste en retard de '
+                        '${formatFcfa(b.arrears - b.withheld)}.'
+                  : '$firstName est remis à jour.',
               divider: false,
             ),
           ],

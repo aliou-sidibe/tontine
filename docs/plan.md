@@ -246,6 +246,20 @@ Durées estimées pour un développeur seul. **Total : environ 3 à 5 semaines.*
 | 6 | Sauvegarde | Export / import chiffré, rappel | Une restauration sur un **autre** téléphone retrouve tout | 1–2 j |
 | 7 | Pilote | Une à deux semaines d'utilisation réelle, corrections | Plus de retour au cahier | 1–2 sem. |
 
+**Audit avant le premier APK de release (6 novembre 2026) :** relecture module par module
+(calculs, données, compte, sauvegarde, création, Aujourd'hui, remise, membres, tours, partage,
+Android). Corrigé, chaque fois avec un test :
+- remise d'un membre à plusieurs places : « Versé par les membres » ne retirait qu'une partie de
+  son manque (seul l'affichage était faux, le montant remis était juste) ;
+- retenue plafonnée à la cagnotte : un membre à plusieurs places très en retard rendait la
+  remise impossible (montant négatif refusé par la base). Le reste de son retard reste dû et
+  l'écran l'indique (« Mariam reste en retard de X F ») ;
+- une retenue ne peut plus être annulée seule, sans sa remise ;
+- un tour dont une demi-place est déjà remise ne peut plus être coché pour un échange.
+
+Vérifié aussi : aucune clé ni `key.properties` dans Git, build de release signé avec la clé de
+l'appli.
+
 **Étape 6 (6 novembre 2026) :** développée, testée, et vérifiée sur l'émulateur comme sur un
 téléphone neuf : sauvegarde enregistrée dans Téléchargements, données de l'appli effacées, puis
 restauration depuis l'écran de création du compte. Les deux tontines sont revenues à l'identique.

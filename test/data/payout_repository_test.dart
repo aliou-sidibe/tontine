@@ -136,6 +136,20 @@ void main() {
     expect(detail.payoutFor(slotId).handed, 995000);
   });
 
+  test('a withholding cannot be cancelled on its own', () async {
+    final payoutId = await repository.recordPayout(
+      tontineId: tontineId,
+      slotId: await slotOfTour(4),
+      method: PayoutMethod.cash,
+      day: payoutDay,
+    );
+    final withheld = await (db.select(
+      db.payments,
+    )..where((p) => p.payoutId.equals(payoutId))).getSingle();
+    expect(() => repository.cancelPayment(withheld.id), throwsStateError);
+    expect(await db.select(db.paymentCancellations).get(), isEmpty);
+  });
+
   test('swapping two tours moves their beneficiaries', () async {
     final awa = await memberId(db, 'Awa Koné');
     final fatou = await memberId(db, 'Fatou Bamba');

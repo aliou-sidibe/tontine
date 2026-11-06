@@ -248,6 +248,13 @@ class TontineRepository {
   /// Cancels a payment with a counter-entry: the payment stays in the
   /// history, crossed out.
   Future<void> cancelPayment(String paymentId, {String? reason}) async {
+    final payment = await (_db.select(
+      _db.payments,
+    )..where((p) => p.id.equals(paymentId))).getSingle();
+    if (payment.method == PaymentMethod.withheld) {
+      // It goes with its payout: cancel the payout instead.
+      throw StateError('A withholding is cancelled with its payout.');
+    }
     final trimmed = reason?.trim();
     await _db
         .into(_db.paymentCancellations)
