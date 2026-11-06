@@ -1,3 +1,4 @@
+import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
@@ -5,6 +6,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:matontine/auth/auth_pages.dart';
 import 'package:matontine/auth/session.dart';
 import 'package:matontine/common/theme.dart';
+import 'package:matontine/data/app_database.dart';
+import 'package:matontine/data/providers.dart';
 import 'package:matontine/tontines/tontines_page.dart';
 
 Widget _app(Widget home, {List<Override> overrides = const []}) =>
@@ -17,11 +20,20 @@ void main() {
   testWidgets('"Mes tontines" shows the mockup header and buttons', (
     tester,
   ) async {
-    await tester.pumpWidget(_app(const TontinesPage()));
+    final db = AppDatabase(NativeDatabase.memory());
+    addTearDown(db.close);
+    await tester.pumpWidget(
+      _app(
+        const TontinesPage(),
+        overrides: [appDatabaseProvider.overrideWithValue(db)],
+      ),
+    );
+    await tester.pumpAndSettle();
 
     expect(find.text('Ma Tontine'), findsOneWidget);
     expect(find.text('Mes tontines'), findsOneWidget);
     expect(find.text('EN COURS'), findsOneWidget);
+    expect(find.text('Aucune tontine pour l’instant'), findsOneWidget);
     expect(find.text('Nouvelle tontine'), findsOneWidget);
     expect(find.text('Sauvegarde'), findsOneWidget);
     expect(find.text('Mon compte'), findsOneWidget);

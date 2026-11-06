@@ -246,7 +246,15 @@ Durées estimées pour un développeur seul. **Total : environ 3 à 5 semaines.*
 | 6 | Sauvegarde | Export / import chiffré, rappel | Une restauration sur un **autre** téléphone retrouve tout | 1–2 j |
 | 7 | Pilote | Une à deux semaines d'utilisation réelle, corrections | Plus de retour au cahier | 1–2 sem. |
 
-**Avancement :** étape 1 presque terminée (6 novembre 2026). Sont faits et testés : le projet,
+**Étape 2 (6 novembre 2026) :** développée et testée. Sont faits : « Mes tontines » avec les
+cartes de la maquette, et « Nouvelle tontine » en 4 écrans (Paramètres, Membres, Ordre avec
+glisser et tirage au sort, Récap), enregistrés d'un bloc. Deux choix hors maquette :
+- l'écran Ordre liste les 20 tours avec défilement ; la ligne « … et les tours 11 à 20 » de la
+  maquette n'était qu'un raccourci d'affichage ;
+- les demi-places sont associées dans l'ordre de saisie, et le tirage au sort les réassocie au
+  hasard ; on ne choisit pas encore à la main qui partage le tour de qui.
+
+**Avancement étape 1 :** presque terminée (6 novembre 2026). Sont faits et testés : le projet,
 les polices embarquées, la charte, la base (schéma v1), les calculs de `lib/domain/` (vérifiés
 avec les chiffres de la maquette), le compte local et son code de secours, l'écran « Mes
 tontines » vide, et la configuration de signature. L'APK de debug compile. Restent : créer la

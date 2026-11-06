@@ -18,6 +18,23 @@ https://claude.ai/artifact/Ke5yYbUMEtzGqQ5SgH9htd (8 écrans).
   l'exemple (`test/domain/maquette_example.dart`).
 - Un écart à la maquette n'est permis que sur demande explicite ; le noter dans le plan.
 
+## Interactions : skill `apple-design`
+
+Le skill `apple-design` (global, `~/.claude/skills/apple-design`) guide le **comportement** de
+l'interface ; la maquette reste la référence de l'**apparence** (en cas de conflit, la maquette
+gagne : pas d'espacement de lettres, de flou ou de transparence qu'elle n'a pas). Ses exemples
+sont pour le web ; en Flutter :
+
+- Retour au toucher immédiat (au `onTapDown`, pas au relâché) ; pas de délai artificiel.
+- Glisser 1:1 sous le doigt (réordonner les tours, feuilles du bas) ; feuilles fermables en les
+  tirant vers le bas, en gardant la vitesse du geste.
+- Animations en ressort et interruptibles (`SpringSimulation`, amortissement 1.0 par défaut) ;
+  un élément sort par où il est entré.
+- Retour haptique seulement sur les moments qui comptent : versement enregistré (appui long),
+  cagnotte remise, élément déposé après un glisser, erreur.
+- Respecter `MediaQuery.disableAnimations` (réduire les animations) : fondu court au lieu d'un
+  mouvement.
+
 ## Code
 
 - Code en anglais, textes affichés en français.

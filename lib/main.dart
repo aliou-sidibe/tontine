@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -27,6 +28,10 @@ class MaTontineApp extends StatelessWidget {
       title: 'Ma Tontine',
       debugShowCheckedModeBanner: false,
       theme: appTheme(),
+      // French dates in the date picker; the app has no other language.
+      locale: const Locale('fr'),
+      supportedLocales: const [Locale('fr')],
+      localizationsDelegates: GlobalMaterialLocalizations.delegates,
       // Since Android 15 the app draws under the system bar: without this
       // inset, the Android buttons hide the bottom of the screens.
       builder: (context, child) => ColoredBox(

@@ -176,6 +176,9 @@ ThemeData appTheme() {
       style: FilledButton.styleFrom(
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
+        // Not in the mockup: a faded green rather than Material's grey.
+        disabledBackgroundColor: AppColors.primary.withValues(alpha: 0.35),
+        disabledForegroundColor: Colors.white,
         minimumSize: const Size.fromHeight(54),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         textStyle: AppText.button,

@@ -460,37 +460,53 @@ class _AuthScaffold extends StatelessWidget {
       body: SafeArea(
         child: Form(
           key: form,
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               if (showBack)
                 Align(
                   alignment: Alignment.centerLeft,
-                  child: IconButton(
-                    tooltip: 'Retour',
-                    color: AppColors.text,
-                    icon: const Icon(Icons.chevron_left, size: 28),
-                    onPressed: () => Navigator.of(context).pop(),
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(8, 12, 8, 0),
+                    child: IconButton(
+                      tooltip: 'Retour',
+                      color: AppColors.text,
+                      icon: const Icon(Icons.chevron_left, size: 28),
+                      onPressed: () => Navigator.of(context).pop(),
+                    ),
                   ),
-                )
-              else
-                const SizedBox(height: 24),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(4, 0, 4, 24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  spacing: 4,
-                  children: [
-                    const Text('Ma Tontine', style: AppText.caption),
-                    Text(title, style: AppText.homeTitle),
-                  ],
+                ),
+              // The form sits in the middle of the screen, as in IP Caisse;
+              // it scrolls when the keyboard leaves too little room.
+              Expanded(
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 440),
+                    child: ListView(
+                      shrinkWrap: true,
+                      padding: const EdgeInsets.all(16),
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(4, 0, 4, 24),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            spacing: 4,
+                            children: [
+                              const Text('Ma Tontine', style: AppText.caption),
+                              Text(title, style: AppText.homeTitle),
+                            ],
+                          ),
+                        ),
+                        for (final child in children)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: child,
+                          ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
-              for (final child in children)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: child,
-                ),
             ],
           ),
         ),
