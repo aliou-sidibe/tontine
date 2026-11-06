@@ -10,6 +10,7 @@ import '../domain/day.dart';
 import '../domain/standing.dart';
 import '../domain/today.dart';
 import '../domain/tontine_terms.dart';
+import '../payout/payout_page.dart';
 import 'payment_sheet.dart';
 import 'today_texts.dart';
 
@@ -55,73 +56,109 @@ class _TodayPageState extends ConsumerState<TodayPage> {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _Header(
-                name: detail.name,
-                terms: detail.terms,
-                view: view,
-                today: today,
-              ),
-              _TourCard(
-                terms: detail.terms,
-                view: view,
-                names: [for (final id in view.beneficiaryIds) names[id] ?? ''],
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  spacing: 10,
-                  children: [
-                    Expanded(child: _CollectedTile(view: view)),
-                    Expanded(child: _AdvanceTile(view: view)),
-                  ],
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 14, 16, 6),
-                child: Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    _FilterChip(
-                      label: 'Tous · ${view.lines.length}',
-                      selected: _filter == TodayFilter.all,
-                      onTap: () => setState(() => _filter = TodayFilter.all),
-                    ),
-                    _FilterChip(
-                      label: 'À encaisser · ${view.toCollectCount}',
-                      selected: _filter == TodayFilter.toCollect,
-                      onTap: () =>
-                          setState(() => _filter = TodayFilter.toCollect),
-                    ),
-                    _FilterChip(
-                      label: 'En retard · ${view.lateCount}',
-                      selected: _filter == TodayFilter.late,
-                      onTap: () => setState(() => _filter = TodayFilter.late),
-                    ),
-                  ],
-                ),
-              ),
+              // The whole screen scrolls, so the card with its payout button
+              // still fits on a small phone; at rest it looks the same.
               Expanded(
-                child: ListView.separated(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  itemCount: lines.length,
-                  separatorBuilder: (_, _) => const SizedBox(height: 8),
-                  itemBuilder: (context, i) => MemberRowTile(
-                    line: lines[i],
-                    subtitle: rowSubtitle(
-                      lines[i],
-                      detail.terms,
-                      view.payoutDay,
+                child: CustomScrollView(
+                  slivers: [
+                    SliverToBoxAdapter(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          _Header(
+                            name: detail.name,
+                            terms: detail.terms,
+                            view: view,
+                            today: today,
+                          ),
+                          _TourCard(
+                            terms: detail.terms,
+                            view: view,
+                            names: [
+                              for (final id in view.beneficiaryIds)
+                                names[id] ?? '',
+                            ],
+                            payoutLabel: view.pendingShares.isEmpty
+                                ? null
+                                : view.pendingShares.first.halves ==
+                                      halvesPerPlace
+                                ? 'Remettre la cagnotte'
+                                : 'Remettre la part de '
+                                      '${firstName(names[view.pendingShares.first.memberId] ?? '')}',
+                            onPayout: view.payoutDue
+                                ? () => openPayout(
+                                    context,
+                                    tontineId: widget.tontineId,
+                                    slotId: view.pendingShares.first.id,
+                                  )
+                                : null,
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              spacing: 10,
+                              children: [
+                                Expanded(child: _CollectedTile(view: view)),
+                                Expanded(child: _AdvanceTile(view: view)),
+                              ],
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 14, 16, 6),
+                            child: Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: [
+                                _FilterChip(
+                                  label: 'Tous · ${view.lines.length}',
+                                  selected: _filter == TodayFilter.all,
+                                  onTap: () =>
+                                      setState(() => _filter = TodayFilter.all),
+                                ),
+                                _FilterChip(
+                                  label: 'À encaisser · ${view.toCollectCount}',
+                                  selected: _filter == TodayFilter.toCollect,
+                                  onTap: () => setState(
+                                    () => _filter = TodayFilter.toCollect,
+                                  ),
+                                ),
+                                _FilterChip(
+                                  label: 'En retard · ${view.lateCount}',
+                                  selected: _filter == TodayFilter.late,
+                                  onTap: () => setState(
+                                    () => _filter = TodayFilter.late,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                    onLongPress: () => showPaymentSheet(
-                      context,
-                      ref,
-                      detail: detail,
-                      line: lines[i],
-                      today: today,
+                    SliverPadding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      sliver: SliverList.separated(
+                        itemCount: lines.length,
+                        separatorBuilder: (_, _) => const SizedBox(height: 8),
+                        itemBuilder: (context, i) => MemberRowTile(
+                          line: lines[i],
+                          subtitle: rowSubtitle(
+                            lines[i],
+                            detail.terms,
+                            view.payoutDay,
+                          ),
+                          onLongPress: () => showPaymentSheet(
+                            context,
+                            ref,
+                            detail: detail,
+                            line: lines[i],
+                            today: today,
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
+                  ],
                 ),
               ),
               const Padding(
@@ -230,11 +267,17 @@ class _TourCard extends StatelessWidget {
     required this.terms,
     required this.view,
     required this.names,
+    required this.payoutLabel,
+    required this.onPayout,
   });
 
   final TontineTerms terms;
   final TodayView view;
   final List<String> names;
+  final String? payoutLabel;
+
+  /// Set once the payout day has come: opens "Remise de la cagnotte".
+  final VoidCallback? onPayout;
 
   @override
   Widget build(BuildContext context) {
@@ -311,6 +354,26 @@ class _TourCard extends StatelessWidget {
             progressLine(view.collected, view.expected),
             style: white.copyWith(fontSize: 13),
           ),
+          // Not in the mockup (day 37): from the payout day on, the card
+          // leads to "Remise de la cagnotte".
+          if (onPayout != null && payoutLabel != null)
+            FilledButton(
+              style: FilledButton.styleFrom(
+                backgroundColor: AppColors.surface,
+                foregroundColor: AppColors.primary,
+                minimumSize: const Size.fromHeight(44),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                textStyle: const TextStyle(
+                  fontFamily: AppFonts.text,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              onPressed: onPayout,
+              child: Text(payoutLabel!),
+            ),
         ],
       ),
     );

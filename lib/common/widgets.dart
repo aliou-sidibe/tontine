@@ -4,18 +4,24 @@ import 'package:flutter/services.dart';
 import 'format.dart';
 import 'theme.dart';
 
-/// Back arrow and 17 px title: header of "Nouvelle tontine" and "Remise de
-/// la cagnotte" (padding 12 8 4, 44 px arrow, 4 px gap).
+/// Back arrow and 17 px title: header of "Nouvelle tontine" (padding 12 8
+/// 4) and "Remise de la cagnotte" (padding 12 8 8); 44 px arrow, 4 px gap.
 class BackHeader extends StatelessWidget {
-  const BackHeader({super.key, required this.title, required this.onBack});
+  const BackHeader({
+    super.key,
+    required this.title,
+    required this.onBack,
+    this.bottom = 4,
+  });
 
   final String title;
   final VoidCallback onBack;
+  final double bottom;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(8, 12, 8, 4),
+      padding: EdgeInsets.fromLTRB(8, 12, 8, bottom),
       child: Row(
         spacing: 4,
         children: [
@@ -30,7 +36,7 @@ class BackHeader extends StatelessWidget {
               onPressed: onBack,
             ),
           ),
-          Text(title, style: AppText.appBarTitle),
+          Expanded(child: Text(title, style: AppText.appBarTitle)),
         ],
       ),
     );
@@ -434,6 +440,93 @@ class InitialsAvatar extends StatelessWidget {
             fontWeight: FontWeight.w700,
             color: AppColors.primary,
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// "Espèces / Mobile money" segmented control (track #EEF0EF, padding 4,
+/// radius 12; selected segment white with a light shadow).
+class MethodSwitch<T> extends StatelessWidget {
+  const MethodSwitch({
+    super.key,
+    required this.options,
+    required this.method,
+    required this.onChanged,
+    this.track = AppColors.segmentTrackSheet,
+    this.label = 'Mode de paiement',
+  });
+
+  /// Values with their labels, "Espèces" then "Mobile money".
+  final List<(T, String)> options;
+  final T method;
+  final ValueChanged<T> onChanged;
+
+  /// #EEF0EF in a sheet, #E7EBE9 on a screen.
+  final Color track;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      label: label,
+      container: true,
+      child: Container(
+        padding: const EdgeInsets.all(4),
+        decoration: BoxDecoration(
+          color: track,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          spacing: 8,
+          children: [
+            for (final (value, text) in options)
+              Expanded(
+                child: Semantics(
+                  selected: method == value,
+                  button: true,
+                  child: GestureDetector(
+                    onTap: () {
+                      HapticFeedback.selectionClick();
+                      onChanged(value);
+                    },
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 150),
+                      height: 40,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: method == value
+                            ? AppColors.surface
+                            : Colors.transparent,
+                        borderRadius: BorderRadius.circular(9),
+                        boxShadow: method == value
+                            ? const [
+                                BoxShadow(
+                                  color: Color(0x1F000000),
+                                  offset: Offset(0, 1),
+                                  blurRadius: 2,
+                                ),
+                              ]
+                            : null,
+                      ),
+                      child: Text(
+                        text,
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: method == value
+                              ? FontWeight.w600
+                              : FontWeight.w500,
+                          color: method == value
+                              ? AppColors.text
+                              : AppColors.onNeutralPale,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
         ),
       ),
     );

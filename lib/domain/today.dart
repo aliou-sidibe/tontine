@@ -63,6 +63,7 @@ class TodayView {
     required this.collectedToday,
     required this.expectedToday,
     required this.lines,
+    required this.pendingShares,
   });
 
   final int dayNumber;
@@ -83,6 +84,13 @@ class TodayView {
 
   /// Members in display order: late, to collect, up to date, ahead.
   final List<MemberLine> lines;
+
+  /// Shares of the current tour whose pot is not handed out yet, in tour
+  /// order.
+  final List<SlotInfo> pendingShares;
+
+  /// The payout day has come and a share is still to hand out.
+  bool get payoutDue => daysToPayout <= 0 && pendingShares.isNotEmpty;
 
   int get toRecover => lines.fold(0, (sum, l) => sum + l.advance);
 
@@ -183,5 +191,9 @@ TodayView todayView(
     collectedToday: members.fold(0, (sum, m) => sum + m.paidToday),
     expectedToday: contributing ? terms.dailyTotal : 0,
     lines: lines,
+    pendingShares: [
+      for (final s in slots)
+        if (s.tour == overview.currentTour && !paidOutSlotIds.contains(s.id)) s,
+    ],
   );
 }

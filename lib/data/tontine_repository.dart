@@ -158,11 +158,20 @@ class TontineRepository {
               ..where((m) => m.tontineId.equals(tontineId))
               ..orderBy([(m) => OrderingTerm.asc(m.position)]))
             .get();
+    final position = {for (final m in members) m.id: m.position};
+    // In tour order, and two halves in members' entry order: always the
+    // same display ("Fatou Bamba ½ + Aminata Koné ½") and the same split of
+    // the top-up.
     final slots =
-        await (_db.select(_db.slots)
-              ..where((s) => s.tontineId.equals(tontineId))
-              ..orderBy([(s) => OrderingTerm.asc(s.tour)]))
-            .get();
+        await (_db.select(
+            _db.slots,
+          )..where((s) => s.tontineId.equals(tontineId))).get()
+          ..sort((a, b) {
+            final byTour = a.tour.compareTo(b.tour);
+            return byTour != 0
+                ? byTour
+                : position[a.memberId]!.compareTo(position[b.memberId]!);
+          });
     final cancellations = {
       for (final c in await _db.select(_db.paymentCancellations).get())
         c.paymentId: c,
@@ -175,12 +184,25 @@ class TontineRepository {
                 (p) => OrderingTerm.desc(p.createdAt),
               ]))
             .get();
+    final cancelledPayouts = {
+      for (final c in await _db.select(_db.payoutCancellations).get())
+        c.payoutId,
+    };
+    final payouts =
+        await (_db.select(_db.payouts)
+              ..where((p) => p.tontineId.equals(tontineId))
+              ..orderBy([(p) => OrderingTerm.asc(p.createdAt)]))
+            .get();
     return TontineDetail(
       id: tontine.id,
       name: tontine.name,
       terms: termsOf(tontine),
       members: members,
       slots: slots,
+      payouts: [
+        for (final p in payouts)
+          PayoutEntry(row: p, cancelled: cancelledPayouts.contains(p.id)),
+      ],
       payments: [
         for (final p in payments)
           PaymentEntry(
@@ -238,6 +260,136 @@ class TontineRepository {
         );
   }
 
+  /// Hands out the pot of one share ("Confirmer la remise de X F") and
+  /// withholds the beneficiary's arrears, in one transaction. The amounts are
+  /// recomputed here from the stored payments, never taken from the screen.
+  Future<String> recordPayout({
+    required String tontineId,
+    required String slotId,
+    required PayoutMethod method,
+    required Day day,
+  }) {
+    return _db.transaction(() async {
+      final tontine = await detail(tontineId);
+      final slot = tontine.slots.where((s) => s.id == slotId).firstOrNull;
+      if (slot == null) throw ArgumentError.value(slotId, 'slotId');
+      if (tontine.paidOutSlotIds.contains(slotId)) {
+        throw StateError('This pot was already handed out.');
+      }
+      if (day.isBefore(tontine.terms.payoutDay(slot.tour))) {
+        throw StateError('The pot is handed out after the tour ends.');
+      }
+      final breakdown = tontine.payoutFor(slotId);
+      final payout = await _db
+          .into(_db.payouts)
+          .insertReturning(
+            PayoutsCompanion.insert(
+              tontineId: tontineId,
+              slotId: slotId,
+              paidOn: day.toIso(),
+              pot: breakdown.pot,
+              collected: breakdown.collected,
+              organizerTopUp: breakdown.organizerTopUp,
+              withheld: breakdown.withheld,
+              handed: breakdown.handed,
+              method: method,
+            ),
+          );
+      if (breakdown.withheld > 0) {
+        // The beneficiary pays his arrears out of his own pot.
+        await _db
+            .into(_db.payments)
+            .insert(
+              PaymentsCompanion.insert(
+                tontineId: tontineId,
+                memberId: slot.memberId,
+                amount: breakdown.withheld,
+                method: PaymentMethod.withheld,
+                paidOn: day.toIso(),
+                payoutId: Value(payout.id),
+              ),
+            );
+      }
+      return payout.id;
+    });
+  }
+
+  /// Cancels a payout with a counter-entry, and the amount withheld with it:
+  /// the beneficiary owes his arrears again.
+  Future<void> cancelPayout(String payoutId, {String? reason}) {
+    final trimmed = reason?.trim();
+    final why = Value(trimmed == null || trimmed.isEmpty ? null : trimmed);
+    return _db.transaction(() async {
+      await _db
+          .into(_db.payoutCancellations)
+          .insert(
+            PayoutCancellationsCompanion.insert(
+              payoutId: payoutId,
+              reason: why,
+            ),
+            mode: InsertMode.insertOrIgnore,
+          );
+      final withheld = await (_db.select(
+        _db.payments,
+      )..where((p) => p.payoutId.equals(payoutId))).get();
+      for (final payment in withheld) {
+        await _db
+            .into(_db.paymentCancellations)
+            .insert(
+              PaymentCancellationsCompanion.insert(
+                paymentId: payment.id,
+                reason: why,
+              ),
+              mode: InsertMode.insertOrIgnore,
+            );
+      }
+    });
+  }
+
+  /// Swaps the beneficiaries of [tourA] and [tourB], neither paid out yet,
+  /// and keeps the swap in the history.
+  Future<void> swapTours({
+    required String tontineId,
+    required int tourA,
+    required int tourB,
+  }) {
+    if (tourA == tourB) throw ArgumentError('Two different tours are needed.');
+    return _db.transaction(() async {
+      final tontine = await (_db.select(
+        _db.tontines,
+      )..where((t) => t.id.equals(tontineId))).getSingle();
+      for (final tour in [tourA, tourB]) {
+        if (tour < 1 || tour > tontine.places) {
+          throw ArgumentError.value(tour, 'tour');
+        }
+      }
+      final slots =
+          await (_db.select(_db.slots)..where(
+                (s) =>
+                    s.tontineId.equals(tontineId) & s.tour.isIn([tourA, tourB]),
+              ))
+              .get();
+      final paidOut = await paidOutSlotIds(tontineId);
+      if (slots.any((s) => paidOut.contains(s.id))) {
+        throw StateError('A tour already paid out cannot be swapped.');
+      }
+      for (final slot in slots) {
+        await (_db.update(_db.slots)..where((s) => s.id.equals(slot.id))).write(
+          SlotsCompanion(tour: Value(slot.tour == tourA ? tourB : tourA)),
+        );
+      }
+      await _db
+          .into(_db.tourSwaps)
+          .insert(
+            TourSwapsCompanion.insert(
+              tontineId: tontineId,
+              tourA: tourA,
+              tourB: tourB,
+            ),
+          );
+    });
+  }
+
   /// Payments not cancelled, by member, withheld amounts included.
   Future<Map<String, int>> paidByMember(String tontineId) async {
     final rows = await _db
@@ -269,6 +421,14 @@ class TontineRepository {
   }
 }
 
+/// A payout as stored, with its cancellation.
+class PayoutEntry {
+  const PayoutEntry({required this.row, required this.cancelled});
+
+  final PayoutRow row;
+  final bool cancelled;
+}
+
 /// A payment as shown in the member history.
 class PaymentEntry {
   const PaymentEntry({
@@ -297,6 +457,7 @@ class TontineDetail {
     required this.terms,
     required this.members,
     required this.slots,
+    required this.payouts,
     required this.payments,
     required this.paidOutSlotIds,
   });
@@ -310,6 +471,9 @@ class TontineDetail {
 
   /// In tour order.
   final List<SlotRow> slots;
+
+  /// Oldest first, cancelled ones included.
+  final List<PayoutEntry> payouts;
 
   /// Newest first, cancelled ones included.
   final List<PaymentEntry> payments;
@@ -328,6 +492,54 @@ class TontineDetail {
     for (final p in payments)
       if (p.memberId == memberId) p,
   ];
+
+  /// Shares of [tour], in stored order.
+  List<SlotRow> sharesOf(int tour) => [
+    for (final s in slots)
+      if (s.tour == tour) s,
+  ];
+
+  /// The payout of [slotId] that is not cancelled, if any.
+  PayoutRow? payoutOf(String slotId) => payouts
+      .where((p) => !p.cancelled && p.row.slotId == slotId)
+      .map((p) => p.row)
+      .firstOrNull;
+
+  /// Every member's places and payments, for the calculations.
+  List<MemberAccount> accounts() {
+    final paid = <String, int>{};
+    for (final p in payments) {
+      if (!p.cancelled) paid[p.memberId] = (paid[p.memberId] ?? 0) + p.amount;
+    }
+    return [
+      for (final m in members)
+        MemberAccount(id: m.id, halves: halvesOf(m.id), paid: paid[m.id] ?? 0),
+    ];
+  }
+
+  /// "Remise de la cagnotte" for one share, from today's payments.
+  PayoutBreakdown payoutFor(String slotId) {
+    final slot = slots.firstWhere((s) => s.id == slotId);
+    final shares = sharesOf(slot.tour);
+    final breakdowns = computePayout(
+      terms,
+      tour: slot.tour,
+      shares: [
+        for (final s in shares)
+          TourShare(memberId: s.memberId, halves: s.halves),
+      ],
+      members: accounts(),
+    );
+    return breakdowns[shares.indexOf(slot)];
+  }
+
+  /// Members the organizer tops up for on [tour], with their shortfall.
+  Map<String, int> topUpsFor(int tour) => othersShortfalls(
+    terms,
+    tour: tour,
+    beneficiaryIds: {for (final s in sharesOf(tour)) s.memberId},
+    members: accounts(),
+  );
 
   List<MemberData> memberData(Day today) {
     final paid = <String, int>{};

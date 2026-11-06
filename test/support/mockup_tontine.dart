@@ -106,3 +106,47 @@ Future<String> seedMockupTontine(AppDatabase db) async {
   }
   return id;
 }
+
+/// What each member misses on tour 4 in the mockup's "Remise de la
+/// cagnotte": Koffi 5 000 F (withheld), Seydou and Moussa 40 000 F together
+/// (topped up by the organizer).
+const payoutShortfalls = {
+  'Koffi Yao': 5000,
+  'Seydou Koné': 25000,
+  'Moussa Diallo': 15000,
+};
+
+/// The mockup's tontine on the evening of day 40 (9 Nov 2026): everyone paid
+/// through day 40 except [payoutShortfalls]. Tour 4 is handed out the next
+/// day, Tuesday 10 November. Returns the tontine id.
+Future<String> seedPayoutDay(AppDatabase db) async {
+  final id = await seedMockupTontine(db);
+  final repository = TontineRepository(db);
+  final detail = await repository.detail(id);
+  final paid = await repository.paidByMember(id);
+  for (final m in detail.members) {
+    final target =
+        exampleTerms.dueThrough(detail.halvesOf(m.id), 40) -
+        (payoutShortfalls[m.name] ?? 0);
+    final missing = target - (paid[m.id] ?? 0);
+    if (missing > 0) {
+      await db
+          .into(db.payments)
+          .insert(
+            PaymentsCompanion.insert(
+              tontineId: id,
+              memberId: m.id,
+              amount: missing,
+              method: PaymentMethod.cash,
+              paidOn: '2026-11-09',
+            ),
+          );
+    }
+  }
+  return id;
+}
+
+/// The id of the member called [name].
+Future<String> memberId(AppDatabase db, String name) async => (await (db.select(
+  db.members,
+)..where((m) => m.name.equals(name))).getSingle()).id;

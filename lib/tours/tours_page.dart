@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../common/cancel_dialog.dart';
+import '../common/errors.dart';
 import '../common/format.dart';
 import '../common/theme.dart';
 import '../common/widgets.dart';
@@ -8,6 +10,8 @@ import '../creation/creation_page.dart' show TourRow;
 import '../data/tontine_repository.dart';
 import '../domain/day.dart';
 import '../domain/tontine_terms.dart';
+import '../payout/payout_page.dart';
+import 'swap_page.dart';
 
 enum TourStatus { done, current, next }
 
@@ -137,8 +141,7 @@ class ToursPage extends ConsumerWidget {
                           fontWeight: FontWeight.w600,
                         ),
                       ),
-                      // Wired in step 4 (échange de tours).
-                      onPressed: null,
+                      onPressed: () => openSwap(context, tontineId: tontineId),
                       icon: const Icon(Icons.swap_vert, size: 16),
                       label: const Text('Échanger deux tours'),
                     ),
@@ -163,6 +166,7 @@ class ToursPage extends ConsumerWidget {
                     who: entries[i].who,
                     date: entries[i].date,
                     trailing: _StatusPill(entries[i].status),
+                    onTap: _onTap(context, ref, detail, entries[i], today),
                   ),
                 ),
               ),
@@ -183,6 +187,78 @@ class ToursPage extends ConsumerWidget {
         },
       ),
     );
+  }
+}
+
+/// A tour handed out offers to cancel its payout; the current tour, once
+/// due, opens "Remise de la cagnotte".
+VoidCallback? _onTap(
+  BuildContext context,
+  WidgetRef ref,
+  TontineDetail detail,
+  TourEntry entry,
+  Day today,
+) {
+  final shares = detail.sharesOf(entry.tour);
+  if (entry.status == TourStatus.done) {
+    return () => _confirmCancelPayout(context, ref, detail, entry.tour);
+  }
+  final pending = [
+    for (final s in shares)
+      if (!detail.paidOutSlotIds.contains(s.id)) s,
+  ];
+  if (pending.isNotEmpty &&
+      !today.isBefore(detail.terms.payoutDay(entry.tour))) {
+    return () =>
+        openPayout(context, tontineId: detail.id, slotId: pending.first.id);
+  }
+  return null;
+}
+
+Future<void> _confirmCancelPayout(
+  BuildContext context,
+  WidgetRef ref,
+  TontineDetail detail,
+  int tour,
+) async {
+  final names = {for (final m in detail.members) m.id: m.name};
+  final payouts = [
+    for (final s in detail.sharesOf(tour)) ?detail.payoutOf(s.id),
+  ];
+  if (payouts.isEmpty) return;
+  final lines = [
+    for (final p in payouts)
+      '${formatFcfa(p.handed)} remis à '
+          '${names[detail.slots.firstWhere((s) => s.id == p.slotId).memberId]} '
+          'le ${formatDay(Day.parse(p.paidOn))}'
+          '${p.withheld > 0 ? ', dont ${formatFcfa(p.withheld)} retenus' : ''}.',
+  ];
+  final reason = await showDialog<String>(
+    context: context,
+    builder: (_) => CancelDialog(
+      title: 'Annuler la remise du tour $tour ?',
+      body:
+          '${lines.join('\n')}\nElle restera dans l’historique et le tour '
+          'sera de nouveau à remettre.',
+      action: 'Annuler la remise',
+    ),
+  );
+  if (reason == null) return;
+  try {
+    for (final p in payouts) {
+      await ref
+          .read(tontineRepositoryProvider)
+          .cancelPayout(p.id, reason: reason);
+    }
+    ref.invalidate(tontineDetailProvider(detail.id));
+    ref.invalidate(tontineCardsProvider);
+  } catch (error, stack) {
+    logError(error, stack);
+    if (context.mounted) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Annulation impossible.')));
+    }
   }
 }
 

@@ -73,14 +73,14 @@ List<PayoutBreakdown> computePayout(
   final beneficiaryIds = shares.map((s) => s.memberId).toSet();
   final byId = {for (final m in members) m.id: m};
 
-  int shortfall(MemberAccount m) =>
-      terms.dailyDue(m.halves) * terms.tourDays -
-      terms.collectedForTour(m.halves, m.paid, tour);
+  int shortfall(MemberAccount m) => _tourShortfall(terms, m, tour);
 
-  var othersShortfall = 0;
-  for (final m in members) {
-    if (!beneficiaryIds.contains(m.id)) othersShortfall += shortfall(m);
-  }
+  final othersShortfall = othersShortfalls(
+    terms,
+    tour: tour,
+    beneficiaryIds: beneficiaryIds,
+    members: members,
+  ).values.fold<int>(0, (sum, v) => sum + v);
 
   final lastDay = terms.lastDayOfTour(tour);
   final result = <PayoutBreakdown>[];
@@ -113,6 +113,25 @@ List<PayoutBreakdown> computePayout(
   }
   return result;
 }
+
+/// What [member] is missing on [tour] once all his payments are counted.
+int _tourShortfall(TontineTerms terms, MemberAccount member, int tour) =>
+    terms.dailyDue(member.halves) * terms.tourDays -
+    terms.collectedForTour(member.halves, member.paid, tour);
+
+/// Members other than the beneficiaries who are short on [tour], with what
+/// they miss: the organizer tops it up and they owe it to him ("Seydou Koné
+/// 25 000 F · Moussa Diallo 15 000 F. Ils te les devront.").
+Map<String, int> othersShortfalls(
+  TontineTerms terms, {
+  required int tour,
+  required Set<String> beneficiaryIds,
+  required List<MemberAccount> members,
+}) => {
+  for (final m in members)
+    if (!beneficiaryIds.contains(m.id) && _tourShortfall(terms, m, tour) > 0)
+      m.id: _tourShortfall(terms, m, tour),
+};
 
 /// Progress of the current tour for the green card on "Aujourd'hui":
 /// collected so far against what was due through [today].

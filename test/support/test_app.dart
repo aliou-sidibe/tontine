@@ -21,15 +21,15 @@ void usePhone(WidgetTester tester) {
   addTearDown(tester.view.reset);
 }
 
-/// The app on Friday 6 November 2026 (day 37 of the mockup's tontine), with
-/// an in-memory database and a temporary documents folder.
-Widget testApp(Widget home, AppDatabase db) {
+/// The app on Friday 6 November 2026 (day 37 of the mockup's tontine), or on
+/// [now], with an in-memory database and a temporary documents folder.
+Widget testApp(Widget home, AppDatabase db, {DateTime? now}) {
   final documents = Directory.systemTemp.createTempSync('matontine_test');
   addTearDown(() => documents.deleteSync(recursive: true));
   return ProviderScope(
     overrides: [
       appDatabaseProvider.overrideWithValue(db),
-      clockProvider.overrideWithValue(() => DateTime(2026, 11, 6, 10)),
+      clockProvider.overrideWithValue(() => now ?? DateTime(2026, 11, 6, 10)),
       documentsDirectoryProvider.overrideWithValue(documents),
     ],
     child: MaterialApp(

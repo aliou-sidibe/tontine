@@ -35,8 +35,8 @@ class TontineOverview {
   /// after the end.
   final int dayNumber;
 
-  /// The tour shown: the one running today, or after the last day the first
-  /// tour not paid out yet.
+  /// The tour shown: the first one whose payout day has come and whose pot
+  /// is not handed out yet, otherwise the one running today.
   final int currentTour;
   final List<String> beneficiaryIds;
   final Day payoutDay;
@@ -80,14 +80,17 @@ TontineOverview overviewOf(
     }
   }
 
+  // A tour whose payout day has come stays on the card until its pot is
+  // handed out; after the last day, the last tour stays.
   var currentTour = terms.tourOfDay(dayNumber);
-  if (dayNumber > terms.totalDays) {
-    currentTour = terms.tours;
-    for (var tour = 1; tour <= terms.tours; tour++) {
-      if (!paidOut(tour)) {
-        currentTour = tour;
-        break;
-      }
+  for (
+    var tour = 1;
+    tour <= terms.tours && terms.lastDayOfTour(tour) < dayNumber;
+    tour++
+  ) {
+    if (!paidOut(tour)) {
+      currentTour = tour;
+      break;
     }
   }
 

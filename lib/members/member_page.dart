@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../common/cancel_dialog.dart';
 import '../common/errors.dart';
 import '../common/format.dart';
 import '../common/theme.dart';
+import '../tours/swap_page.dart';
 import '../common/widgets.dart';
 import '../data/tables.dart';
 import '../data/tontine_repository.dart';
@@ -163,6 +165,8 @@ class _MemberView extends ConsumerWidget {
                   tour: slot.tour,
                   halves: slot.halves,
                   paidOut: detail.paidOutSlotIds.contains(slot.id),
+                  onSwap: () =>
+                      openSwap(context, tontineId: detail.id, tour: slot.tour),
                 ),
               ],
               const SizedBox(height: 18),
@@ -217,7 +221,11 @@ class _MemberView extends ConsumerWidget {
     // the payment is kept.
     final reason = await showDialog<String>(
       context: context,
-      builder: (_) => _CancelDialog(amount: payment.amount),
+      builder: (_) => CancelDialog(
+        title: 'Annuler ce versement de ${formatFcfa(payment.amount)} ?',
+        body: 'Il restera dans l’historique, barré, et ne comptera plus.',
+        action: 'Annuler le versement',
+      ),
     );
     if (reason == null) return;
     try {
@@ -234,67 +242,6 @@ class _MemberView extends ConsumerWidget {
         ).showSnackBar(const SnackBar(content: Text('Annulation impossible.')));
       }
     }
-  }
-}
-
-class _CancelDialog extends StatefulWidget {
-  const _CancelDialog({required this.amount});
-
-  final int amount;
-
-  @override
-  State<_CancelDialog> createState() => _CancelDialogState();
-}
-
-class _CancelDialogState extends State<_CancelDialog> {
-  final _reason = TextEditingController();
-
-  @override
-  void dispose() {
-    _reason.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      backgroundColor: AppColors.surface,
-      title: Text(
-        'Annuler ce versement de ${formatFcfa(widget.amount)} ?',
-        style: const TextStyle(
-          fontFamily: AppFonts.display,
-          fontSize: 20,
-          fontWeight: FontWeight.w700,
-          color: AppColors.text,
-        ),
-      ),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        spacing: 12,
-        children: [
-          const Text(
-            'Il restera dans l’historique, barré, et ne comptera plus.',
-            style: AppText.body,
-          ),
-          LabeledBox(
-            label: 'Motif (facultatif)',
-            child: BareInput(controller: _reason, hint: 'erreur de saisie'),
-          ),
-        ],
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Garder'),
-        ),
-        TextButton(
-          style: TextButton.styleFrom(foregroundColor: AppColors.onWarningPale),
-          onPressed: () => Navigator.of(context).pop(_reason.text),
-          child: const Text('Annuler le versement'),
-        ),
-      ],
-    );
   }
 }
 
@@ -390,19 +337,21 @@ class _Tile extends StatelessWidget {
 }
 
 /// "Son tour · Tour 12 · ven. 29 janv. 2027 · 1 000 000 F", with
-/// "Échanger" (wired in step 4).
+/// "Échanger".
 class _TourSection extends StatelessWidget {
   const _TourSection({
     required this.terms,
     required this.tour,
     required this.halves,
     required this.paidOut,
+    required this.onSwap,
   });
 
   final TontineTerms terms;
   final int tour;
   final int halves;
   final bool paidOut;
+  final VoidCallback onSwap;
 
   @override
   Widget build(BuildContext context) {
@@ -451,8 +400,7 @@ class _TourSection extends StatelessWidget {
                   fontWeight: FontWeight.w600,
                 ),
               ),
-              // Wired in step 4 (échange de tours).
-              onPressed: null,
+              onPressed: onSwap,
               child: const Text('Échanger'),
             ),
         ],

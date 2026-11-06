@@ -541,11 +541,13 @@ class TourRow extends StatelessWidget {
     required this.date,
     this.handle,
     this.trailing,
+    this.onTap,
   });
 
   final int number;
   final String who;
   final String date;
+  final VoidCallback? onTap;
 
   /// Drag handle of the order step (44 px, so the row's right padding is 4).
   final Widget? handle;
@@ -556,6 +558,7 @@ class TourRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return RowCard(
+      onTap: onTap,
       padding: EdgeInsets.fromLTRB(12, 8, handle == null ? 12 : 4, 8),
       child: Row(
         spacing: 12,

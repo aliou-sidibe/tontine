@@ -246,12 +246,36 @@ Durées estimées pour un développeur seul. **Total : environ 3 à 5 semaines.*
 | 6 | Sauvegarde | Export / import chiffré, rappel | Une restauration sur un **autre** téléphone retrouve tout | 1–2 j |
 | 7 | Pilote | Une à deux semaines d'utilisation réelle, corrections | Plus de retour au cahier | 1–2 sem. |
 
+**Étape 4 (6 novembre 2026) :** développée et testée. Sont faits :
+- l'écran « Remise de la cagnotte » de la maquette, avec le calcul ligne par ligne et la liste des
+  membres pour qui ton frère complète ;
+- la confirmation, qui enregistre la remise et, s'il y a lieu, la retenue du bénéficiaire (un
+  versement en mode « retenue ») ;
+- l'échange de deux tours non remis, depuis « Tours » ou depuis la fiche membre ;
+- l'annulation d'une remise par contre-écriture, depuis un tour « Remis », qui annule aussi sa
+  retenue.
+
+Les montants de la remise sont recalculés au moment de l'enregistrement à partir des versements
+enregistrés, jamais repris de l'écran. Choix hors maquette (la maquette montre le jour 37) :
+- à partir du jour du ramassage, la carte verte reste sur le tour à remettre (« aujourd'hui »,
+  « depuis N jours ») et montre un bouton blanc « Remettre la cagnotte », ou « Remettre la part
+  de Fatou » pour une demi-place ; elle passe au tour suivant une fois la cagnotte remise ;
+- l'écran « Aujourd'hui » défile en entier, liste comprise, pour que la carte et son bouton
+  tiennent sur un petit téléphone ; au repos, il est identique à la maquette ;
+- « Échanger deux tours » est un écran à part : on coche deux tours, les tours remis ne se cochent
+  pas ; depuis la fiche membre, son tour est déjà coché ;
+- textes des cas absents de la maquette : « Tout le monde a payé ce tour. », « Pas de retenue ·
+  Koffi est à jour. », « Seydou te les devra. » pour un seul membre, et pour une demi-place
+  « …, partagés entre les deux demi-places. » ;
+- les deux demi-places d'un tour s'affichent dans l'ordre de saisie des membres ;
+- les échanges sont gardés en base (`tour_swap`) mais pas encore affichés : à voir au pilote.
+
 **Étape 3 (6 novembre 2026) :** développée et testée. Sont faits : la barre du bas (Aujourd'hui,
 Membres, Tours, Plus), l'écran « Aujourd'hui », la feuille de versement par appui long (avec
 « Annuler » juste après l'enregistrement), l'onglet Membres, la fiche membre avec l'annulation
 d'un versement par contre-écriture, et la réouverture de la dernière tontine au lancement.
-L'onglet Tours affiche déjà le calendrier ; ses boutons « Échanger deux tours » et « Partager
-l'état (PDF) » arrivent aux étapes 4 et 5. Écarts à la maquette :
+L'onglet Tours affiche déjà le calendrier ; son bouton « Partager l'état (PDF) » arrive à
+l'étape 5. Écarts à la maquette :
 - « Jour + retard » affiche le vrai total dû (15 000 F pour Awa, jour du jour compris), et non
   les 20 000 F de la maquette, qui l'auraient mise en avance ;
 - sur « Aujourd'hui », un appui simple ne fait rien ; dans l'onglet Membres, il ouvre la fiche ;

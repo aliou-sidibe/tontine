@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../common/errors.dart';
 import '../common/format.dart';
 import '../common/theme.dart';
+import '../common/widgets.dart';
 import '../data/tables.dart';
 import '../data/tontine_repository.dart';
 import '../domain/day.dart';
@@ -276,7 +277,11 @@ class _PaymentSheetState extends ConsumerState<PaymentSheet> {
                 ],
               ),
             ),
-            _MethodSwitch(
+            MethodSwitch<PaymentMethod>(
+              options: const [
+                (PaymentMethod.cash, 'Espèces'),
+                (PaymentMethod.mobileMoney, 'Mobile money'),
+              ],
               method: _method,
               onChanged: (m) => setState(() => _method = m),
             ),
@@ -420,83 +425,6 @@ class _Shortcut extends StatelessWidget {
               ),
             ),
           ),
-        ),
-      ),
-    );
-  }
-}
-
-/// "Espèces / Mobile money" segmented control (track #EEF0EF, padding 4,
-/// radius 12; selected segment white with a light shadow).
-class _MethodSwitch extends StatelessWidget {
-  const _MethodSwitch({required this.method, required this.onChanged});
-
-  final PaymentMethod method;
-  final ValueChanged<PaymentMethod> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      label: 'Mode de paiement',
-      container: true,
-      child: Container(
-        padding: const EdgeInsets.all(4),
-        decoration: BoxDecoration(
-          color: AppColors.segmentTrackSheet,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Row(
-          spacing: 8,
-          children: [
-            for (final (value, label) in const [
-              (PaymentMethod.cash, 'Espèces'),
-              (PaymentMethod.mobileMoney, 'Mobile money'),
-            ])
-              Expanded(
-                child: Semantics(
-                  selected: method == value,
-                  button: true,
-                  child: GestureDetector(
-                    onTap: () {
-                      HapticFeedback.selectionClick();
-                      onChanged(value);
-                    },
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 150),
-                      height: 40,
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: method == value
-                            ? AppColors.surface
-                            : Colors.transparent,
-                        borderRadius: BorderRadius.circular(9),
-                        boxShadow: method == value
-                            ? const [
-                                BoxShadow(
-                                  color: Color(0x1F000000),
-                                  offset: Offset(0, 1),
-                                  blurRadius: 2,
-                                ),
-                              ]
-                            : null,
-                      ),
-                      child: Text(
-                        label,
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: method == value
-                              ? FontWeight.w600
-                              : FontWeight.w500,
-                          color: method == value
-                              ? AppColors.text
-                              : AppColors.onNeutralPale,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-          ],
         ),
       ),
     );
