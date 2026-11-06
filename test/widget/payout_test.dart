@@ -9,8 +9,8 @@ import 'package:matontine/members/member_page.dart';
 import '../support/mockup_tontine.dart';
 import '../support/test_app.dart';
 
-/// Tuesday 10 November 2026, payout day of tour 4.
-final payoutMorning = DateTime(2026, 11, 10, 9);
+/// Monday 9 November 2026 (day 40), payout day of tour 4.
+final payoutMorning = DateTime(2026, 11, 9, 9);
 
 void main() {
   late AppDatabase db;
@@ -41,7 +41,7 @@ void main() {
     // The tour stays on the card until its pot is handed out.
     expect(find.text('TOUR 4 SUR 20'), findsOneWidget);
     expect(
-      find.text(nb('mar. 10 nov. · aujourd’hui · 1 000 000 F')),
+      find.text(nb('lun. 9 nov. · aujourd’hui · 1 000 000 F')),
       findsOneWidget,
     );
     await tester.tap(find.text('Remettre la cagnotte'));
@@ -51,7 +51,7 @@ void main() {
     expect(find.text('TOUR 4 · JOURS 31 À 40'), findsOneWidget);
     expect(find.text('Koffi Yao'), findsOneWidget);
     expect(
-      find.text('mar. 10 nov. 2026 · lendemain du jour 40'),
+      find.text('lun. 9 nov. 2026 · jour 40, dernier jour du tour'),
       findsOneWidget,
     );
     expect(find.text('Cagnotte du tour'), findsOneWidget);
@@ -98,7 +98,7 @@ void main() {
     final payout = await db
         .select(db.payouts)
         .get()
-        .then((rows) => rows.singleWhere((p) => p.paidOn == '2026-11-10'));
+        .then((rows) => rows.singleWhere((p) => p.paidOn == '2026-11-09'));
     expect(payout.handed, 995000);
     expect(payout.method, PayoutMethod.mobileMoney);
     // The card moves on to tour 5; the organizer now waits for 40 000 F.

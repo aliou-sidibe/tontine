@@ -42,7 +42,7 @@ class TontineTerms {
   /// What one full place pays over one tour.
   int get perPlacePerTour => contributionPerPlace * tourDays;
 
-  /// The pot collected over one tour, handed out the day after it ends.
+  /// The pot collected over one tour, handed out on its last day.
   int get potPerTour => places * perPlacePerTour;
 
   /// Contribution of everyone for one day.
@@ -64,8 +64,9 @@ class TontineTerms {
 
   int lastDayOfTour(int tour) => tour * tourDays;
 
-  /// The pot is handed out the day after the tour's last day.
-  Day payoutDay(int tour) => firstDay.addDays(tour * tourDays);
+  /// The pot is handed out on the tour's last day (day J), once that day's
+  /// contributions are collected.
+  Day payoutDay(int tour) => dayOf(lastDayOfTour(tour));
 
   /// Daily contribution of a member holding [halves] half places.
   int dailyDue(int halves) => halves * contributionPerPlace ~/ halvesPerPlace;

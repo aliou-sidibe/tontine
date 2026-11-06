@@ -31,7 +31,7 @@ void main() {
       findsOneWidget,
     );
     expect(
-      find.text('Tour 4 : Koffi Yao ramasse le mar. 10 nov.'),
+      find.text('Tour 4 : Koffi Yao ramasse le lun. 9 nov.'),
       findsOneWidget,
     );
     expect(find.text('3 en retard'), findsOneWidget);
@@ -71,12 +71,12 @@ void main() {
     expect(find.text(nb('50 000 F')), findsOneWidget);
     expect(find.text(nb('1 000 000 F')), findsOneWidget);
     expect(find.text('20 tours · 200 jours'), findsOneWidget);
-    expect(find.text('dim. 11 oct. 2026'), findsOneWidget);
-    expect(find.text('lun. 19 avr. 2027'), findsOneWidget);
+    expect(find.text('sam. 10 oct. 2026'), findsOneWidget);
+    expect(find.text('dim. 18 avr. 2027'), findsOneWidget);
     expect(
       find.text(
-        'Tous les jours comptent. Le ramassage a lieu le lendemain du '
-        'dernier jour du tour.',
+        'Tous les jours comptent. Le ramassage a lieu le dernier jour '
+        'du tour.',
       ),
       findsOneWidget,
     );
@@ -110,11 +110,11 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('Ibrahim Ouattara'), findsOneWidget);
-    expect(find.text('dim. 11 oct. 2026'), findsOneWidget);
+    expect(find.text('sam. 10 oct. 2026'), findsOneWidget);
     expect(find.text('Koffi Yao'), findsOneWidget);
-    expect(find.text('mar. 10 nov. 2026'), findsOneWidget);
+    expect(find.text('lun. 9 nov. 2026'), findsOneWidget);
     expect(find.text('Mariam Traoré · place 1 sur 2'), findsOneWidget);
-    expect(find.text('ven. 20 nov. 2026'), findsOneWidget);
+    expect(find.text('jeu. 19 nov. 2026'), findsOneWidget);
     await tester.scrollUntilVisible(
       find.text('Fatou Bamba ½ + Aminata Koné ½'),
       200,
@@ -122,7 +122,7 @@ void main() {
     );
     expect(find.text('Fatou Bamba ½ + Aminata Koné ½'), findsOneWidget);
     expect(
-      find.text(nb('mer. 30 déc. 2026 · 500 000 F chacune')),
+      find.text(nb('mar. 29 déc. 2026 · 500 000 F chacune')),
       findsOneWidget,
     );
     expect(find.text('Suivant : récapitulatif'), findsOneWidget);

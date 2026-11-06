@@ -21,12 +21,12 @@ void main() {
       expect(exampleTerms.lastDayOfTour(4), 40);
     });
 
-    test('payout happens the day after the tour ends', () {
-      expect(exampleTerms.payoutDay(1), Day(2026, 10, 11));
-      expect(exampleTerms.payoutDay(4), Day(2026, 11, 10));
-      expect(exampleTerms.payoutDay(9), Day(2026, 12, 30));
-      expect(exampleTerms.payoutDay(12), Day(2027, 1, 29));
-      expect(exampleTerms.payoutDay(20), Day(2027, 4, 19));
+    test('payout happens on the last day of the tour', () {
+      expect(exampleTerms.payoutDay(1), Day(2026, 10, 10));
+      expect(exampleTerms.payoutDay(4), Day(2026, 11, 9));
+      expect(exampleTerms.payoutDay(9), Day(2026, 12, 29));
+      expect(exampleTerms.payoutDay(12), Day(2027, 1, 28));
+      expect(exampleTerms.payoutDay(20), Day(2027, 4, 18));
     });
 
     test('a half place pays 2 500 F a day, two places 10 000 F', () {

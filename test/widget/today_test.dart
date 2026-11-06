@@ -45,7 +45,7 @@ void main() {
     expect(find.text('jours 31 à 40'), findsOneWidget);
     expect(find.text('Koffi Yao ramasse'), findsOneWidget);
     expect(
-      find.text(nb('mar. 10 nov. · dans 4 jours · 1 000 000 F')),
+      find.text(nb('lun. 9 nov. · dans 3 jours · 1 000 000 F')),
       findsOneWidget,
     );
     expect(
@@ -94,7 +94,7 @@ void main() {
       200,
       scrollable: find.byType(Scrollable).last,
     );
-    expect(find.text('1 place · ramasse le 10 nov.'), findsOneWidget);
+    expect(find.text('1 place · ramasse le 9 nov.'), findsOneWidget);
     expect(find.text('Payé aujourd’hui'), findsWidgets);
 
     await tester.scrollUntilVisible(
@@ -187,7 +187,7 @@ void main() {
     expect(find.text(nb('170 000 F')), findsWidgets);
     expect(find.text(nb('sur 185 000 F attendus')), findsOneWidget);
     expect(find.text('Son tour'), findsOneWidget);
-    expect(find.text('Tour 12 · ven. 29 janv. 2027'), findsOneWidget);
+    expect(find.text('Tour 12 · jeu. 28 janv. 2027'), findsOneWidget);
     expect(find.text(nb('1 000 000 F')), findsOneWidget);
     expect(find.text('Échanger'), findsOneWidget);
     expect(find.text('Versements'), findsOneWidget);

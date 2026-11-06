@@ -29,8 +29,9 @@ ordre des éléments. Un écran absent de la maquette reprend exactement la mêm
   de ½). Une demi-place cotise la moitié, et **deux demi-places ramassent ensemble au même tour**,
   la moitié de la cagnotte chacune.
 - **Le bénéficiaire cotise aussi pendant son tour.**
-- **Le ramassage a lieu le lendemain du dernier jour du tour** (tour 1 du 1er au 10 : ramassage le
-  11).
+- **Le ramassage a lieu le dernier jour du tour, le jour J** (tour 1 du 1er au 10 : ramassage le
+  10, une fois les cotisations du jour encaissées). Décidé le 6 novembre 2026 ; avant, c'était le
+  lendemain.
 - **Ordre des tours** : fixé à la main ou tiré au sort à la création.
 - **Échange de tours** possible en cours de tontine, tant qu'aucun des deux tours n'a été ramassé.
   L'échange reste dans l'historique.
@@ -59,7 +60,7 @@ Notations, pour une tontine : `C` cotisation d'une place par jour, `T` jours par
 | Versement d'une place par tour | `C × T` | 50 000 F |
 | Cagnotte d'un tour | `N × C × T` | 1 000 000 F |
 | Jours du tour `t` | de `(t−1)×T + 1` à `t×T` | tour 4 : jours 31 à 40 |
-| Ramassage du tour `t` | premier jour + `t×T` jours | tour 4 : jour 41, mar. 10 nov. 2026 |
+| Ramassage du tour `t` | jour `t×T` (dernier jour du tour) | tour 4 : jour 40, lun. 9 nov. 2026 |
 
 **Cotisation d'un membre par jour :** `places × C`, ses places comptées en demi-places pour
 rester en entiers (`demi-places × C ÷ 2`). Pour que la demi-place tombe juste, **la cotisation
@@ -245,6 +246,13 @@ Durées estimées pour un développeur seul. **Total : environ 3 à 5 semaines.*
 | 5 | Partage | PDF de l'état (qui a payé, qui doit combien, prochains tours), partage WhatsApp | L'état part sur WhatsApp en deux appuis | 2–3 j |
 | 6 | Sauvegarde | Export / import chiffré, rappel | Une restauration sur un **autre** téléphone retrouve tout | 1–2 j |
 | 7 | Pilote | Une à deux semaines d'utilisation réelle, corrections | Plus de retour au cahier | 1–2 sem. |
+
+**Ramassage le jour J (6 novembre 2026) :** la cagnotte se remet le dernier jour du tour, et non
+plus le lendemain. Tout le calendrier avance d'un jour (tour 4 : lun. 9 nov. au lieu du mar. 10
+nov.). Le bouton « Remettre la cagnotte » apparaît dès le dernier jour ; une fois la cagnotte
+remise, la carte verte passe au tour suivant le jour même. Écart avec la maquette, qui montre
+encore les anciennes dates : « mar. 10 nov. · dans 4 jours » devient « lun. 9 nov. · dans 3
+jours », et « lendemain du jour 40 » devient « jour 40, dernier jour du tour ».
 
 **Audit avant le premier APK de release (6 novembre 2026) :** relecture module par module
 (calculs, données, compte, sauvegarde, création, Aujourd'hui, remise, membres, tours, partage,

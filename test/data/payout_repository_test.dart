@@ -12,7 +12,7 @@ void main() {
   late TontineRepository repository;
   late String tontineId;
 
-  final payoutDay = Day(2026, 11, 10);
+  final payoutDay = Day(2026, 11, 9);
 
   setUp(() async {
     db = AppDatabase(NativeDatabase.memory());
@@ -60,7 +60,7 @@ void main() {
     expect(payout.organizerTopUp, 40000);
     expect(payout.withheld, 5000);
     expect(payout.method, PayoutMethod.mobileMoney);
-    expect(payout.paidOn, '2026-11-10');
+    expect(payout.paidOn, '2026-11-09');
 
     final koffi = await memberId(db, 'Koffi Yao');
     final withheld = await (db.select(
@@ -90,7 +90,7 @@ void main() {
           tontineId: tontineId,
           slotId: slotId,
           method: PayoutMethod.cash,
-          day: Day(2026, 11, 9),
+          day: Day(2026, 11, 8),
         ),
         throwsStateError,
       );

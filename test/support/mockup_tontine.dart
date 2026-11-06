@@ -117,8 +117,8 @@ const payoutShortfalls = {
 };
 
 /// The mockup's tontine on the evening of day 40 (9 Nov 2026): everyone paid
-/// through day 40 except [payoutShortfalls]. Tour 4 is handed out the next
-/// day, Tuesday 10 November. Returns the tontine id.
+/// through day 40 except [payoutShortfalls]. Tour 4 is handed out that
+/// same day, its last. Returns the tontine id.
 Future<String> seedPayoutDay(AppDatabase db) async {
   final id = await seedMockupTontine(db);
   final repository = TontineRepository(db);

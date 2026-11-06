@@ -230,7 +230,8 @@ String _topUpCaption(
 }
 
 /// "TOUR 4 · JOURS 31 À 40", the beneficiary, "mar. 10 nov. 2026 ·
-/// lendemain du jour 40".
+/// jour 40, dernier jour du tour" (the mockup said "mar. 10 nov. 2026 ·
+/// lendemain du jour 40" before the payout moved to day J).
 class _BeneficiaryCard extends StatelessWidget {
   const _BeneficiaryCard({
     required this.terms,
@@ -275,7 +276,7 @@ class _BeneficiaryCard extends StatelessWidget {
           ),
           Text(
             '${formatDay(terms.payoutDay(tour), withYear: true)} · '
-            'lendemain du jour $last',
+            'jour $last, dernier jour du tour',
             style: const TextStyle(
               fontSize: 14,
               color: AppColors.textSecondary,

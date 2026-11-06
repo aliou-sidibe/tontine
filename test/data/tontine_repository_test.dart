@@ -72,7 +72,7 @@ void main() {
       [for (final id in o.beneficiaryIds) card.memberNames[id]],
       ['Koffi Yao'],
     );
-    expect(o.payoutDay, Day(2026, 11, 10));
+    expect(o.payoutDay, Day(2026, 11, 9));
     expect(o.lateCount, 3);
     expect(o.toRecover, 10000);
     expect(o.toursPaidOut, 3);

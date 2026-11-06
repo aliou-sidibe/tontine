@@ -31,7 +31,7 @@ void main() {
     expect(s.name, 'Tontine du marché');
     expect(s.dateLine, 'État au ven. 6 nov. 2026 · jour 37 sur 200');
     expect(s.tourTitle, 'Tour 4 sur 20 · Koffi Yao ramasse');
-    expect(s.tourLine, nb('mar. 10 nov. · dans 4 jours · 1 000 000 F'));
+    expect(s.tourLine, nb('lun. 9 nov. · dans 3 jours · 1 000 000 F'));
     expect(s.progress, nb('630 000 F réunis · 700 000 F attendus à ce jour'));
     expect(s.lateLine, nb('3 membres en retard · 80 000 F au total'));
     expect(s.fileName, 'etat-tontine-du-marche-2026-11-06.pdf');

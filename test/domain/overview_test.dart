@@ -24,13 +24,25 @@ TontineOverview _on(Day day, Set<String> paidOut) => overviewOf(
 
 void main() {
   test('a tour stays on the card until its pot is handed out', () {
-    // Day 41 (10 Nov): tour 4 ended yesterday, its pot is due today.
+    // Day 41 (10 Nov): tour 4 ended yesterday, its pot was due then and is
+    // still to hand out.
     final due = _on(Day(2026, 11, 10), {'s1', 's2', 's3'});
     expect(due.currentTour, 4);
-    expect(due.payoutDay, Day(2026, 11, 10));
+    expect(due.payoutDay, Day(2026, 11, 9));
 
     final handed = _on(Day(2026, 11, 10), {'s1', 's2', 's3', 's4'});
     expect(handed.currentTour, 5);
+  });
+
+  test('on its last day, a tour handed out gives way to the next one', () {
+    // Day 40 (9 Nov): tour 4's payout day.
+    final due = _on(Day(2026, 11, 9), {'s1', 's2', 's3'});
+    expect(due.currentTour, 4);
+    expect(due.payoutDay, Day(2026, 11, 9));
+
+    final handed = _on(Day(2026, 11, 9), {'s1', 's2', 's3', 's4'});
+    expect(handed.currentTour, 5);
+    expect(handed.payoutDay, Day(2026, 11, 19));
   });
 
   test('the earliest tour not handed out comes first', () {

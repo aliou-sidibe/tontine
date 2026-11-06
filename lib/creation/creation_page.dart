@@ -266,8 +266,8 @@ class CalculationCard extends StatelessWidget {
               value((t) => formatDay(t.payoutDay(t.tours), withYear: true)),
             ),
             const Text(
-              'Tous les jours comptent. Le ramassage a lieu le lendemain du '
-              'dernier jour du tour.',
+              'Tous les jours comptent. Le ramassage a lieu le dernier jour '
+              'du tour.',
               style: TextStyle(fontSize: 12, color: AppColors.onPrimaryPale),
             ),
           ],
