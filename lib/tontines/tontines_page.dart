@@ -2,11 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../auth/session.dart';
+import '../backup/backup_page.dart';
+import '../backup/backup_service.dart';
 import '../common/format.dart';
 import '../common/theme.dart';
 import '../common/widgets.dart';
 import '../creation/creation_page.dart';
+import '../data/providers.dart';
 import '../data/tontine_repository.dart';
+import '../domain/day.dart';
 import '../home/last_tontine.dart';
 
 /// "Mes tontines" (mockup board "Mes tontines").
@@ -18,6 +22,13 @@ class TontinesPage extends ConsumerStatefulWidget {
 }
 
 class _TontinesPageState extends ConsumerState<TontinesPage> {
+  /// "Plus tard" hides the backup reminder until the next day.
+  Day? _reminderHiddenOn;
+
+  void _openBackup() =>
+      Navigator.of(context)
+          .push(MaterialPageRoute<void>(builder: (_) => const BackupPage()));
+
   @override
   void initState() {
     super.initState();
@@ -36,6 +47,13 @@ class _TontinesPageState extends ConsumerState<TontinesPage> {
   @override
   Widget build(BuildContext context) {
     final cards = ref.watch(tontineCardsProvider);
+    final lastBackup = ref.watch(lastBackupProvider);
+    final now = ref.watch(clockProvider)();
+    final showReminder =
+        (cards.value?.isNotEmpty ?? false) &&
+        lastBackup.hasValue &&
+        backupOverdue(lastBackup.value, now) &&
+        _reminderHiddenOn != Day.fromDateTime(now);
     return Scaffold(
       body: SafeArea(
         child: Column(
@@ -70,6 +88,14 @@ class _TontinesPageState extends ConsumerState<TontinesPage> {
                 ),
               ),
             ),
+            if (showReminder)
+              _BackupReminder(
+                last: lastBackup.value,
+                now: now,
+                onBackup: _openBackup,
+                onLater: () =>
+                    setState(() => _reminderHiddenOn = Day.fromDateTime(now)),
+              ),
             Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
@@ -88,11 +114,10 @@ class _TontinesPageState extends ConsumerState<TontinesPage> {
                   Row(
                     spacing: 10,
                     children: [
-                      const Expanded(
+                      Expanded(
                         child: OutlinedButton(
-                          // Wired in step 6 (sauvegarde).
-                          onPressed: null,
-                          child: Text('Sauvegarde'),
+                          onPressed: _openBackup,
+                          child: const Text('Sauvegarde'),
                         ),
                       ),
                       Expanded(
@@ -400,6 +425,85 @@ class _EmptyCard extends StatelessWidget {
           style: TextStyle(fontSize: 13, color: AppColors.onNeutralPale),
         ),
       ],
+    );
+  }
+}
+
+/// Not in the mockup: shown on "Mes tontines" when the last backup is more
+/// than 7 days old, in the warning colors. "Plus tard" hides it for the day.
+class _BackupReminder extends StatelessWidget {
+  const _BackupReminder({
+    required this.last,
+    required this.now,
+    required this.onBackup,
+    required this.onLater,
+  });
+
+  final DateTime? last;
+  final DateTime now;
+  final VoidCallback onBackup;
+  final VoidCallback onLater;
+
+  @override
+  Widget build(BuildContext context) {
+    final last = this.last;
+    final days = last == null
+        ? null
+        : Day.fromDateTime(last).daysUntil(Day.fromDateTime(now));
+    final text = last == null
+        ? 'Aucune sauvegarde pour l’instant. Sans elle, un téléphone perdu '
+              'efface tout.'
+        : days != null && days > 0
+        ? 'Dernière sauvegarde il y a $days jours. Pense à en refaire une.'
+        : 'La date de la dernière sauvegarde est incertaine. Pense à en '
+              'refaire une.';
+    const style = TextStyle(
+      fontFamily: AppFonts.text,
+      fontSize: 13,
+      fontWeight: FontWeight.w600,
+    );
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+      padding: const EdgeInsets.fromLTRB(12, 10, 4, 4),
+      decoration: BoxDecoration(
+        color: AppColors.warningPale,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: Text(
+              text,
+              style: style.copyWith(color: AppColors.onWarningPale),
+            ),
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              TextButton(
+                style: TextButton.styleFrom(
+                  foregroundColor: AppColors.textSecondary,
+                  textStyle: style,
+                  minimumSize: const Size(44, 44),
+                ),
+                onPressed: onLater,
+                child: const Text('Plus tard'),
+              ),
+              TextButton(
+                style: TextButton.styleFrom(
+                  foregroundColor: AppColors.onWarningPale,
+                  textStyle: style,
+                  minimumSize: const Size(44, 44),
+                ),
+                onPressed: onBackup,
+                child: const Text('Sauvegarder'),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }

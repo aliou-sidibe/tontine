@@ -7,11 +7,15 @@ import 'package:path/path.dart' as p;
 import '../data/providers.dart';
 import 'tontine_home.dart';
 
+/// File of [LastTontineStore], deleted by a backup restore: the restored
+/// data may not hold that tontine.
+const lastTontineFileName = 'last_tontine.txt';
+
 /// Remembers the last tontine opened, so the app reopens on its
 /// "Aujourd'hui" screen. A tiny file, read and written synchronously.
 class LastTontineStore {
   LastTontineStore(Directory root)
-    : _file = File(p.join(root.path, 'last_tontine.txt'));
+    : _file = File(p.join(root.path, lastTontineFileName));
 
   final File _file;
 

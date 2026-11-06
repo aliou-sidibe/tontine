@@ -5,6 +5,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../backup/backup_page.dart';
 import '../common/errors.dart';
 import '../common/password_field.dart';
 import '../common/theme.dart';
@@ -145,6 +146,12 @@ class _CreateAccountPageState extends ConsumerState<CreateAccountPage> {
         FilledButton(
           onPressed: _busy ? null : _create,
           child: const Text('Créer le compte'),
+        ),
+        // A new phone starts here: the backup brings its own account back.
+        TextButton(
+          style: TextButton.styleFrom(foregroundColor: AppColors.primary),
+          onPressed: _busy ? null : () => restoreBackup(context, ref),
+          child: const Text('Restaurer une sauvegarde'),
         ),
       ],
     );

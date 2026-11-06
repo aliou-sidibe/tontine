@@ -246,6 +246,30 @@ Durées estimées pour un développeur seul. **Total : environ 3 à 5 semaines.*
 | 6 | Sauvegarde | Export / import chiffré, rappel | Une restauration sur un **autre** téléphone retrouve tout | 1–2 j |
 | 7 | Pilote | Une à deux semaines d'utilisation réelle, corrections | Plus de retour au cahier | 1–2 sem. |
 
+**Étape 6 (6 novembre 2026) :** développée, testée, et vérifiée sur l'émulateur comme sur un
+téléphone neuf : sauvegarde enregistrée dans Téléchargements, données de l'appli effacées, puis
+restauration depuis l'écran de création du compte. Les deux tontines sont revenues à l'identique.
+Reprise d'IP Caisse (code copié et traduit) :
+- fichier `.matontine` chiffré (AES-256-GCM, clé PBKDF2 à 200 000 itérations), mot de passe
+  de sauvegarde de 8 caractères minimum, conservé nulle part ;
+- enregistrement par le sélecteur de fichiers d'Android, copie relue et vérifiée avant de noter
+  la date de la sauvegarde ;
+- restauration vérifiée avant tout remplacement (mot de passe, intégrité, un seul compte,
+  tontines cohérentes), appliquée au redémarrage, et annulée proprement en cas de coupure ;
+- « Restaurer une sauvegarde » sur l'écran de création du compte, pour un nouveau téléphone.
+
+Différences avec IP Caisse :
+- pas de photos ;
+- au démarrage, la demande de restauration est retirée **avant** le ménage des fichiers
+  temporaires. Dans IP Caisse, un ménage raté laissait la demande en place, et la restauration
+  était retentée au lancement suivant, au risque d'effacer les saisies faites entre-temps ;
+- la sauvegarde efface aussi la dernière tontine ouverte, qui peut ne pas exister dans les
+  données restaurées.
+
+Hors maquette : l'écran « Sauvegarde », et sur « Mes tontines » un bandeau orange de rappel quand
+la dernière sauvegarde a plus de 7 jours (« Plus tard » le masque jusqu'au lendemain). Après une
+restauration, le rappel réapparaît : la date de sauvegarde est propre à chaque téléphone.
+
 **Étape 5 (6 novembre 2026) :** développée et testée. Le bouton « Partager l'état (PDF) sur
 WhatsApp » de l'onglet Tours ouvre le menu de partage d'Android : WhatsApp est à un appui. Le PDF
 (A4, polices et couleurs de l'appli) contient :
