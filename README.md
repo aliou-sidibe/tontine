@@ -26,21 +26,25 @@ flutter test
 ## Générer l'APK
 
 ```bash
-flutter build apk --release --split-per-abi
+tool/build_apk.sh
 ```
 
-Le numéro de build vient de `pubspec.yaml` (`version: 1.0.0+1` : version 1.0.0, build 1).
+Le script lance `flutter build apk --release --split-per-abi` (toujours avec `--split-per-abi`,
+comme pour IP Caisse) puis copie les APK dans `build/release/` avec le nom de l'appli et la
+version. Les options passées au script sont transmises à `flutter build apk`.
+
+La version vient de `pubspec.yaml` (`version: 1.0.0+2` : version 1.0.0, build 2).
 **Augmentez le numéro après le `+` à chaque nouvelle version**, sans jamais revenir en arrière :
 Android refuse d'installer une version dont le numéro est plus petit que celui déjà installé.
-**Toujours avec `--split-per-abi`**, comme pour IP Caisse.
+Pour la changer sans modifier le fichier : `tool/build_apk.sh --build-name=1.1.0 --build-number=3`.
 
-Les fichiers sont produits dans `build/app/outputs/flutter-apk/` :
+Les fichiers produits dans `build/release/` :
 
 | Fichier | Pour |
 |---|---|
-| `app-arm64-v8a-release.apk` | La plupart des téléphones récents : c'est celui à envoyer |
-| `app-armeabi-v7a-release.apk` | Les anciens téléphones 32 bits |
-| `app-x86_64-release.apk` | L'émulateur |
+| `MaTontine-1.0.0+2-arm64-v8a.apk` | La plupart des téléphones récents : c'est celui à envoyer |
+| `MaTontine-1.0.0+2-armeabi-v7a.apk` | Les anciens téléphones 32 bits |
+| `MaTontine-1.0.0+2-x86_64.apk` | L'émulateur |
 
 L'APK s'envoie par WhatsApp, Drive ou câble USB. Sur le téléphone, il faut autoriser
 l'installation d'applis inconnues. Faites une sauvegarde dans l'appli avant chaque mise à jour.
