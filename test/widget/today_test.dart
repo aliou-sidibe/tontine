@@ -6,6 +6,7 @@ import 'package:matontine/data/app_database.dart';
 import 'package:matontine/home/tontine_home.dart';
 import 'package:matontine/members/member_page.dart';
 
+import '../support/chip_width.dart';
 import '../support/mockup_tontine.dart';
 import '../support/test_app.dart';
 
@@ -61,6 +62,9 @@ void main() {
     expect(find.text('Tous · 20'), findsOneWidget);
     expect(find.text('À encaisser · 3'), findsOneWidget);
     expect(find.text('En retard · 3'), findsOneWidget);
+    for (final label in ['Tous · 20', 'À encaisser · 3', 'En retard · 3']) {
+      expectHugsLabel(tester, find.text(label));
+    }
     expect(
       find.text('Appui long sur un membre pour enregistrer un versement'),
       findsOneWidget,
@@ -125,6 +129,8 @@ void main() {
     expect(find.text(nb('Le jour · 5 000 F')), findsOneWidget);
     // The mockup said 20 000 F; 15 000 F is what Awa really owes (see plan).
     expect(find.text(nb('Jour + retard · 15 000 F')), findsOneWidget);
+    expectHugsLabel(tester, find.text(nb('Le jour · 5 000 F')));
+    expectHugsLabel(tester, find.text(nb('Jour + retard · 15 000 F')));
     expect(find.text('Montant reçu'), findsOneWidget);
     expect(find.text('Awa sera à jour jusqu’au jour 35'), findsOneWidget);
     expect(find.text('Espèces'), findsOneWidget);

@@ -104,16 +104,19 @@ class _ReasonChip extends StatelessWidget {
             borderRadius: BorderRadius.circular(18),
           ),
           onTap: onTap,
+          // As wide as its label, not the whole row of the Wrap.
           child: Container(
             height: 36,
             padding: const EdgeInsets.symmetric(horizontal: 14),
-            alignment: Alignment.center,
-            child: Text(
-              label,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
-                color: selected ? AppColors.onPrimaryPale : AppColors.text,
+            child: Center(
+              widthFactor: 1,
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+                  color: selected ? AppColors.onPrimaryPale : AppColors.text,
+                ),
               ),
             ),
           ),

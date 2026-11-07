@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:matontine/data/app_database.dart';
 import 'package:matontine/home/tontine_home.dart';
 
+import '../support/chip_width.dart';
 import '../support/mockup_tontine.dart';
 import '../support/test_app.dart';
 
@@ -43,6 +44,9 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('Motif (facultatif)'), findsOneWidget);
+    for (final reason in ['Fête', 'Marché fermé', 'Imprévu']) {
+      expectHugsLabel(tester, find.text(reason));
+    }
     expect(find.text('Tout est décalé d’un jour'), findsOneWidget);
     expect(
       rich('Koffi Yao ramassera le mar. 10 nov. au lieu du lun. 9 nov.'),
@@ -64,6 +68,18 @@ void main() {
 
     await tester.tap(find.text('Imprévu'));
     await tester.tap(find.widgetWithText(FilledButton, 'Sauter aujourd’hui'));
+    await tester.pumpAndSettle();
+    expect(find.text('Confirmer le saut ?'), findsOneWidget);
+    expect(
+      find.text(
+        'Personne ne cotise le ven. 6 nov. Tout est décalé d’un jour. Tu '
+        'pourras l’annuler dans Tours › Jours sautés jusqu’à la fin de la '
+        'journée.',
+      ),
+      findsOneWidget,
+    );
+    expect(await db.select(db.skippedDays).get(), isEmpty);
+    await tester.tap(find.widgetWithText(TextButton, 'Sauter aujourd’hui'));
     await tester.pumpAndSettle();
 
     final row = await db.select(db.skippedDays).getSingle();
@@ -138,6 +154,23 @@ void main() {
     );
     await tester.tap(find.text('Sauter 2 jours'));
     await tester.pumpAndSettle();
+    expect(find.text('Sauter 2 jours ?'), findsOneWidget);
+    expect(
+      find.text(
+        'Dim. 8 nov. et mer. 11 nov. · tout est décalé de 2 jours. Personne '
+        'ne cotise ces jours-là. Un saut s’annule tant que son jour n’est '
+        'pas passé.',
+      ),
+      findsOneWidget,
+    );
+    // "Retour" keeps the choice and saves nothing.
+    await tester.tap(find.widgetWithText(TextButton, 'Retour'));
+    await tester.pumpAndSettle();
+    expect(await db.select(db.skippedDays).get(), isEmpty);
+    await tester.tap(find.text('Sauter 2 jours'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(TextButton, 'Sauter 2 jours'));
+    await tester.pumpAndSettle();
 
     expect(find.text('dim. 8 nov. 2026'), findsOneWidget);
     expect(find.text('mer. 11 nov. 2026'), findsOneWidget);
@@ -147,9 +180,21 @@ void main() {
 
     await tester.tap(find.text('Annuler').first);
     await tester.pumpAndSettle();
-    expect(find.text('dim. 8 nov. 2026'), findsNothing);
+    expect(find.text('Annuler le saut du dim. 8 nov. ?'), findsOneWidget);
+    await tester.enterText(find.byType(TextField), 'erreur');
+    await tester.tap(find.text('Annuler le saut'));
+    await tester.pumpAndSettle();
+    // The cancelled skip stays, struck through, without "Annuler".
+    final struck = tester.widget<Text>(find.text('dim. 8 nov. 2026'));
+    expect(struck.style?.decoration, TextDecoration.lineThrough);
+    expect(find.text('Fête · saut annulé · erreur'), findsOneWidget);
+    expect(find.text('Annuler'), findsOneWidget);
     expect(find.text('1 jour plus tard que prévu'), findsOneWidget);
-    expect(await db.select(db.skippedDays).get(), hasLength(1));
+    expect(await db.select(db.skippedDays).get(), hasLength(2));
+    final cancellation = await db
+        .select(db.skippedDayCancellations)
+        .getSingle();
+    expect(cancellation.reason, 'erreur');
 
     // Back on "Tours": the row and the calendar follow.
     await tester.tap(find.byTooltip('Retour'));

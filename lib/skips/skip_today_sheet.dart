@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../common/confirm_dialog.dart';
 import '../common/errors.dart';
 import '../common/format.dart';
 import '../common/theme.dart';
@@ -55,7 +56,17 @@ class _SkipTodaySheetState extends ConsumerState<SkipTodaySheet> {
   String? _reason;
   var _saving = false;
 
-  Future<void> _skip() async {
+  Future<void> _skip(SkipEffect effect) async {
+    final confirmed = await confirmAction(
+      context,
+      title: 'Confirmer le saut ?',
+      body:
+          '${sentence('Personne ne cotise le ${formatDay(widget.today)}')} '
+          '${sentence(effect.title)} Tu pourras l’annuler dans Tours › Jours sautés '
+          'jusqu’à la fin de la journée.',
+      action: 'Sauter aujourd’hui',
+    );
+    if (!confirmed || !mounted) return;
     setState(() => _saving = true);
     try {
       await ref
@@ -167,7 +178,7 @@ class _SkipTodaySheetState extends ConsumerState<SkipTodaySheet> {
                     style: FilledButton.styleFrom(
                       minimumSize: const Size.fromHeight(52),
                     ),
-                    onPressed: _saving ? null : _skip,
+                    onPressed: _saving ? null : () => _skip(effect),
                     child: const Text('Sauter aujourd’hui'),
                   ),
                 ),

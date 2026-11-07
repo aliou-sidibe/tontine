@@ -9,6 +9,7 @@ import 'generated/schema.dart';
 
 import 'generated/schema_v1.dart' as v1;
 import 'generated/schema_v2.dart' as v2;
+import 'generated/schema_v3.dart' as v3;
 
 void main() {
   driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
@@ -122,6 +123,63 @@ void main() {
           expectedNewTourSwapData,
           await newDb.select(newDb.tourSwap).get(),
         );
+      },
+    );
+  });
+  // Version 3 drops the unique day of skipped_day (a cancelled skip stays)
+  // and adds skipped_day_cancellation: the skipped days of version 2 stay.
+  test('migration from v2 to v3 keeps skipped days', () async {
+    const tontine = (
+      id: 't1',
+      name: 'Tontine du marché',
+      places: 20,
+      contributionPerPlace: 5000,
+      tourDays: 10,
+      firstDay: '2026-10-01',
+      createdAt: 1793000000,
+    );
+    await verifier.testWithDataIntegrity(
+      oldVersion: 2,
+      newVersion: 3,
+      createOld: v2.DatabaseAtV2.new,
+      createNew: v3.DatabaseAtV3.new,
+      openTestedDatabase: AppDatabase.new,
+      createItems: (batch, oldDb) {
+        batch.insert(
+          oldDb.tontine,
+          v2.TontineData(
+            id: tontine.id,
+            name: tontine.name,
+            places: tontine.places,
+            contributionPerPlace: tontine.contributionPerPlace,
+            tourDays: tontine.tourDays,
+            firstDay: tontine.firstDay,
+            createdAt: tontine.createdAt,
+          ),
+        );
+        batch.insert(
+          oldDb.skippedDay,
+          const v2.SkippedDayData(
+            id: 's1',
+            tontineId: 't1',
+            day: '2026-11-08',
+            reason: 'Fête',
+            createdAt: 1793000000,
+          ),
+        );
+      },
+      validateItems: (newDb) async {
+        expect(await newDb.select(newDb.skippedDay).get(), const [
+          v3.SkippedDayData(
+            id: 's1',
+            tontineId: 't1',
+            day: '2026-11-08',
+            reason: 'Fête',
+            createdAt: 1793000000,
+          ),
+        ]);
+        expect(await newDb.select(newDb.skippedDayCancellation).get(), isEmpty);
+        expect(await newDb.select(newDb.tontine).get(), hasLength(1));
       },
     );
   });

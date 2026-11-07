@@ -35,10 +35,6 @@ String joinDays(Iterable<Day> days) {
   return '${texts.sublist(0, texts.length - 1).join(', ')} et ${texts.last}';
 }
 
-/// Ends a sentence: "au lieu du lun. 9 nov." keeps the abbreviation's dot
-/// as the full stop.
-String _sentence(String text) => text.endsWith('.') ? text : '$text.';
-
 String _shiftText(int shift) =>
     'tout est décalé ${shift == 1 ? 'd’un jour' : 'de $shift jours'}';
 
@@ -69,12 +65,12 @@ SkipEffect skipEffect(
           ? EffectLine(
               '$who ${detail.sharesOf(tour).length > 1 ? 'ramasseront' : 'ramassera'} le ',
               formatDay(now),
-              _sentence(' au lieu du ${formatDay(old)}'),
+              sentence(' au lieu du ${formatDay(old)}'),
             )
           : EffectLine(
               '$who, le ',
               formatDay(now),
-              _sentence(' au lieu du ${formatDay(old)}'),
+              sentence(' au lieu du ${formatDay(old)}'),
             ),
     );
   }
@@ -85,7 +81,7 @@ SkipEffect skipEffect(
     EffectLine(
       'Fin de la tontine : ',
       formatDay(newEnd, withYear: true),
-      _sentence(' au lieu du ${formatDay(oldEnd)}'),
+      sentence(' au lieu du ${formatDay(oldEnd)}'),
     ),
   );
   final shiftText = _shiftText(shift);

@@ -45,7 +45,8 @@ ordre des éléments. Un écran absent de la maquette reprend exactement la mêm
 - **Jours sautés** (fêtes, marché fermé, imprévu) : ces jours-là, personne ne cotise, et tout ce
   qui suit recule d'autant (ramassages, fin de la tontine). On ne saute qu'aujourd'hui ou un jour
   à venir, jamais un jour où une cagnotte a déjà été remise. Un saut s'annule tant que son jour
-  n'est pas passé, depuis l'écran « Jours sautés » seulement.
+  n'est pas passé, depuis l'écran « Jours sautés » seulement, par une contre-écriture : le saut
+  annulé reste dans la liste, barré, et le jour peut être sauté de nouveau.
 - **Paiements : espèces ou mobile money**, sans intégration d'API (simple mention).
 - **Saisie d'un versement uniquement par appui long** sur le membre. Un appui simple ne fait rien
   (évite les erreurs). Le pavé s'ouvre pré-rempli avec la cotisation du jour.
@@ -124,7 +125,8 @@ ni ne se supprime, il s'annule par une contre-écriture (même principe qu'IP Ca
 | `payout` | une remise : tontine, part (`slot`), jour, cagnotte, complément de l'organisateur, retenue, montant remis, mode, création. |
 | `payout_cancellation` | remise annulée, motif, création. |
 | `tour_swap` | échange : tontine, tour A, tour B, création. Les parts sont échangées dans la même transaction. |
-| `skipped_day` | jour sauté : tontine, jour, motif (facultatif), création ; un seul par tontine et par jour. Schéma v2. |
+| `skipped_day` | jour sauté : tontine, jour, motif (facultatif), création. Schéma v2 ; en v3, plus d'unicité par jour (un saut annulé reste) : au plus un saut non annulé par jour, vérifié par le dépôt. |
+| `skipped_day_cancellation` | saut annulé, motif, création. Schéma v3. |
 
 ## Écrans
 
@@ -268,8 +270,21 @@ jours suivants. Sont faits :
 - la ligne « Jours sautés : 8 nov., 11 nov. » dans le PDF.
 
 Schéma de la base en version 2 (table `skipped_day`), avec sa migration testée : les données
-existantes et les sauvegardes faites avant restent lisibles. Un saut annulé est supprimé, sans
-trace : il n'a jamais compté.
+existantes et les sauvegardes faites avant restent lisibles.
+
+**Confirmations et sauts annulés (7 novembre 2026, demandé ; écarts à la maquette) :**
+- une boîte de confirmation (« Retour » / l'action) avant chaque action sensible : sauter
+  aujourd'hui (« Confirmer le saut ? »), sauter des jours (« Sauter 2 jours ? »), remettre la
+  cagnotte (« Remettre 995 000 F à Koffi ? »), échanger deux tours (« Échanger les tours 9 et 12 ? ») ;
+- l'annulation d'un saut passe par la même boîte que l'annulation d'un versement (motif
+  facultatif, « Garder » / « Annuler le saut ») ;
+- un saut annulé n'est plus supprimé : table `skipped_day_cancellation` (schéma v3, migration
+  testée), et il reste dans la liste « Jours sautés », date barrée en gris, avec « Fête · saut
+  annulé · motif » et sans « Annuler ».
+Déjà confirmés avant : annulation d'un versement ou d'une remise, restauration d'une sauvegarde.
+Sans confirmation, volontairement : le versement (appui long, fréquent, annulable aussitôt depuis
+le message), la création d'une tontine (l'écran récapitulatif tient lieu de confirmation) et la
+déconnexion (aucune donnée touchée).
 
 **Ramassage le jour J (6 novembre 2026) :** la cagnotte se remet le dernier jour du tour, et non
 plus le lendemain. Tout le calendrier avance d'un jour (tour 4 : lun. 9 nov. au lieu du mar. 10

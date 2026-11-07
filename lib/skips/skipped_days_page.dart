@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../common/cancel_dialog.dart';
+import '../common/confirm_dialog.dart';
 import '../common/errors.dart';
 import '../common/format.dart';
 import '../common/theme.dart';
@@ -34,9 +36,23 @@ class SkippedDaysPage extends ConsumerWidget {
     Day day,
     Day today,
   ) async {
+    final reason = await showDialog<String>(
+      context: context,
+      builder: (_) => CancelDialog(
+        title: 'Annuler le saut du ${formatDay(day)} ?',
+        body:
+            'Ce jour redevient un jour de cotisation et les ramassages qui '
+            'suivent reviennent un jour plus tôt. Le saut restera barré dans '
+            'la liste.',
+        action: 'Annuler le saut',
+      ),
+    );
+    if (reason == null || !context.mounted) return;
     final messenger = ScaffoldMessenger.of(context);
     try {
-      await ref.read(tontineRepositoryProvider).unskipDay(id, today: today);
+      await ref
+          .read(tontineRepositoryProvider)
+          .unskipDay(id, today: today, reason: reason);
       ref.invalidate(tontineDetailProvider(tontineId));
       ref.invalidate(tontineCardsProvider);
       messenger.showSnackBar(
@@ -142,7 +158,7 @@ class SkippedDaysPage extends ConsumerWidget {
                         ),
                       ),
                       const SizedBox(height: 12),
-                      if (detail.skippedDays.isEmpty)
+                      if (detail.skipHistory.isEmpty)
                         const Padding(
                           padding: EdgeInsets.symmetric(horizontal: 4),
                           child: Text(
@@ -159,19 +175,25 @@ class SkippedDaysPage extends ConsumerWidget {
                           ),
                           child: Column(
                             children: [
-                              for (final (i, row) in detail.skippedDays.indexed)
+                              for (final (i, entry)
+                                  in detail.skipHistory.indexed)
                                 _SkippedRow(
-                                  day: Day.parse(row.day),
-                                  reason: row.reason,
-                                  last: i == detail.skippedDays.length - 1,
+                                  day: Day.parse(entry.row.day),
+                                  reason: entry.row.reason,
+                                  cancelled: entry.cancelled,
+                                  cancelReason: entry.cancelReason,
+                                  last: i == detail.skipHistory.length - 1,
                                   // A day already passed stays skipped.
-                                  onCancel: Day.parse(row.day).isBefore(today)
+                                  onCancel:
+                                      entry.cancelled ||
+                                          Day.parse(entry.row.day)
+                                              .isBefore(today)
                                       ? null
                                       : () => _unskip(
                                           context,
                                           ref,
-                                          row.id,
-                                          Day.parse(row.day),
+                                          entry.row.id,
+                                          Day.parse(entry.row.day),
                                           today,
                                         ),
                                 ),
@@ -211,16 +233,22 @@ class SkippedDaysPage extends ConsumerWidget {
 }
 
 /// A skipped day: date (600 14 px), reason, and "Annuler" while it is to come.
+/// A cancelled skip stays, its date struck through (not in the mockup: asked
+/// for, see docs/plan.md).
 class _SkippedRow extends StatelessWidget {
   const _SkippedRow({
     required this.day,
     required this.reason,
+    required this.cancelled,
+    required this.cancelReason,
     required this.last,
     required this.onCancel,
   });
 
   final Day day;
   final String? reason;
+  final bool cancelled;
+  final String? cancelReason;
   final bool last;
   final VoidCallback? onCancel;
 
@@ -244,13 +272,26 @@ class _SkippedRow extends StatelessWidget {
               children: [
                 Text(
                   formatDay(day, withYear: true),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.text,
+                    color: cancelled ? AppColors.textTertiary : AppColors.text,
+                    decoration: cancelled ? TextDecoration.lineThrough : null,
+                    decorationColor: AppColors.textTertiary,
                   ),
                 ),
-                if (reason != null) Text(reason!, style: AppText.small),
+                if (cancelled)
+                  Text(
+                    [
+                      ?reason,
+                      'saut annulé',
+                      if (cancelReason != null && cancelReason!.isNotEmpty)
+                        cancelReason!,
+                    ].join(' · '),
+                    style: AppText.small,
+                  )
+                else if (reason != null)
+                  Text(reason!, style: AppText.small),
               ],
             ),
           ),
@@ -303,10 +344,22 @@ class _ChooseSkipDaysState extends ConsumerState<ChooseSkipDaysPage> {
     );
   }
 
-  Future<void> _skip(Day today) async {
+  Future<void> _skip(TontineDetail detail, Day today) async {
+    final count = _chosen.length;
+    final effect = skipEffect(detail, today, _chosen);
+    final days = count == 1 ? '1 jour' : '$count jours';
+    final confirmed = await confirmAction(
+      context,
+      title: 'Sauter $days ?',
+      body:
+          '${sentence('${effect.title[0].toUpperCase()}${effect.title.substring(1)}')} '
+          'Personne ne cotise ${count == 1 ? 'ce jour-là' : 'ces jours-là'}. '
+          'Un saut s’annule tant que son jour n’est pas passé.',
+      action: 'Sauter $days',
+    );
+    if (!confirmed || !mounted) return;
     setState(() => _saving = true);
     final messenger = ScaffoldMessenger.of(context);
-    final count = _chosen.length;
     try {
       await ref
           .read(tontineRepositoryProvider)
@@ -414,7 +467,9 @@ class _ChooseSkipDaysState extends ConsumerState<ChooseSkipDaysPage> {
                   : _chosen.length == 1
                   ? 'Sauter 1 jour'
                   : 'Sauter ${_chosen.length} jours',
-              onPressed: _chosen.isEmpty || _saving ? null : () => _skip(today),
+              onPressed: _chosen.isEmpty || _saving || detail.value == null
+                  ? null
+                  : () => _skip(detail.value!, today),
             ),
           ],
         ),

@@ -64,3 +64,7 @@ String initialsOf(String name) {
   final last = words.length > 1 ? firstLetter(words.last) : '';
   return (firstLetter(words.first) + last).toUpperCase();
 }
+
+/// Ends a sentence: "au lieu du lun. 9 nov." keeps the abbreviation's dot
+/// as the full stop.
+String sentence(String text) => text.endsWith('.') ? text : '$text.';

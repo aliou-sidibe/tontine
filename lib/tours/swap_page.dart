@@ -4,7 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../common/confirm_dialog.dart';
 import '../common/errors.dart';
+import '../common/format.dart';
 import '../common/theme.dart';
 import '../common/widgets.dart';
 import '../creation/creation_page.dart' show TourRow;
@@ -50,8 +52,24 @@ class _SwapPageState extends ConsumerState<SwapPage> {
     });
   }
 
-  Future<void> _swap() async {
-    final [a, b] = _chosen;
+  Future<void> _swap(TontineDetail detail) async {
+    final [a, b] = [..._chosen]..sort();
+    final names = {for (final m in detail.members) m.id: m.name};
+    String who(int tour) =>
+        [for (final s in detail.sharesOf(tour)) names[s.memberId] ?? '']
+            .join(' et ');
+    String when(int tour) => formatDay(detail.terms.payoutDay(tour));
+    final confirmed = await confirmAction(
+      context,
+      title: 'Échanger les tours $a et $b ?',
+      body:
+          '${who(a)} '
+          '${detail.sharesOf(a).length > 1 ? 'ramasseront' : 'ramassera'} '
+          'au tour $b, le ${when(b)}, et ${who(b)} au '
+          '${sentence('tour $a, le ${when(a)}')}',
+      action: 'Échanger',
+    );
+    if (!confirmed || !mounted) return;
     setState(() => _saving = true);
     final messenger = ScaffoldMessenger.of(context);
     try {
@@ -157,7 +175,9 @@ class _SwapPageState extends ConsumerState<SwapPage> {
               label: sorted.length == 2
                   ? 'Échanger les tours ${sorted[0]} et ${sorted[1]}'
                   : 'Choisis deux tours',
-              onPressed: sorted.length == 2 && !_saving ? _swap : null,
+              onPressed: sorted.length == 2 && !_saving && detail.value != null
+                  ? () => _swap(detail.value!)
+                  : null,
             ),
           ],
         ),

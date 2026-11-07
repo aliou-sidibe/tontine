@@ -24,6 +24,7 @@ const databaseFileName = '$databaseName.sqlite';
     PayoutCancellations,
     TourSwaps,
     SkippedDays,
+    SkippedDayCancellations,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -43,7 +44,7 @@ class AppDatabase extends _$AppDatabase {
   /// On every schema change: bump this number, run
   /// `dart run drift_dev make-migrations`, then write the migration step.
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -52,6 +53,12 @@ class AppDatabase extends _$AppDatabase {
         // Skipped days (feasts, market closed).
         await m.createTable(schema.skippedDay);
         await m.createIndex(schema.skippedDayTontine);
+      },
+      from2To3: (m, schema) async {
+        // A cancelled skip stays, struck through: the unique day goes, and
+        // cancellations get their table.
+        await m.alterTable(TableMigration(schema.skippedDay));
+        await m.createTable(schema.skippedDayCancellation);
       },
     ),
     beforeOpen: (details) async {

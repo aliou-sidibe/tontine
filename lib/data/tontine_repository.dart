@@ -194,6 +194,18 @@ class TontineRepository {
               ..orderBy([(p) => OrderingTerm.asc(p.createdAt)]))
             .get();
     final skippedDays = await _skippedDays(tontineId);
+    final skipCancellations = {
+      for (final c in await _db.select(_db.skippedDayCancellations).get())
+        c.skippedDayId: c,
+    };
+    final allSkips =
+        await (_db.select(_db.skippedDays)
+              ..where((d) => d.tontineId.equals(tontineId))
+              ..orderBy([
+                (d) => OrderingTerm.asc(d.day),
+                (d) => OrderingTerm.asc(d.createdAt),
+              ]))
+            .get();
     return TontineDetail(
       id: tontine.id,
       name: tontine.name,
@@ -218,12 +230,28 @@ class TontineRepository {
       ],
       paidOutSlotIds: await paidOutSlotIds(tontineId),
       skippedDays: skippedDays,
+      skipHistory: [
+        for (final d in allSkips)
+          SkippedDayEntry(
+            row: d,
+            cancelled: skipCancellations.containsKey(d.id),
+            cancelReason: skipCancellations[d.id]?.reason,
+          ),
+      ],
     );
   }
 
+  /// The skipped days that count: the cancelled ones left out.
   Future<List<SkippedDayRow>> _skippedDays(String tontineId) =>
       (_db.select(_db.skippedDays)
-            ..where((d) => d.tontineId.equals(tontineId))
+            ..where(
+              (d) =>
+                  d.tontineId.equals(tontineId) &
+                  d.id.isNotInQuery(
+                    _db.selectOnly(_db.skippedDayCancellations)
+                      ..addColumns([_db.skippedDayCancellations.skippedDayId]),
+                  ),
+            )
             ..orderBy([(d) => OrderingTerm.asc(d.day)]))
           .get();
 
@@ -287,18 +315,36 @@ class TontineRepository {
     });
   }
 
-  /// Contributes again on a skipped day that has not passed yet: it never
-  /// counted, so it leaves no trace.
-  Future<void> unskipDay(String skippedDayId, {required Day today}) async {
-    final row = await (_db.select(
-      _db.skippedDays,
-    )..where((d) => d.id.equals(skippedDayId))).getSingle();
-    if (Day.parse(row.day).isBefore(today)) {
-      throw StateError('A day already passed stays skipped.');
-    }
-    await (_db.delete(
-      _db.skippedDays,
-    )..where((d) => d.id.equals(skippedDayId))).go();
+  /// Contributes again on a skipped day that has not passed yet, by a
+  /// counter-entry: the skip stays in the history, cancelled.
+  Future<void> unskipDay(
+    String skippedDayId, {
+    required Day today,
+    String? reason,
+  }) {
+    final trimmed = reason?.trim();
+    return _db.transaction(() async {
+      final row = await (_db.select(
+        _db.skippedDays,
+      )..where((d) => d.id.equals(skippedDayId))).getSingle();
+      if (Day.parse(row.day).isBefore(today)) {
+        throw StateError('A day already passed stays skipped.');
+      }
+      final cancelled = await (_db.select(
+        _db.skippedDayCancellations,
+      )..where((c) => c.skippedDayId.equals(skippedDayId))).getSingleOrNull();
+      if (cancelled != null) throw StateError('Skip already cancelled.');
+      await _db
+          .into(_db.skippedDayCancellations)
+          .insert(
+            SkippedDayCancellationsCompanion.insert(
+              skippedDayId: skippedDayId,
+              reason: Value(
+                trimmed == null || trimmed.isEmpty ? null : trimmed,
+              ),
+            ),
+          );
+    });
   }
 
   /// Records money received from a member. Append-only.
@@ -539,6 +585,19 @@ class PaymentEntry {
   final String? cancelReason;
 }
 
+/// A skip with its fate: a cancelled one stays in the list, struck through.
+class SkippedDayEntry {
+  const SkippedDayEntry({
+    required this.row,
+    required this.cancelled,
+    this.cancelReason,
+  });
+
+  final SkippedDayRow row;
+  final bool cancelled;
+  final String? cancelReason;
+}
+
 class TontineDetail {
   const TontineDetail({
     required this.id,
@@ -550,6 +609,7 @@ class TontineDetail {
     required this.payments,
     required this.paidOutSlotIds,
     required this.skippedDays,
+    this.skipHistory = const [],
   });
 
   final String id;
@@ -569,8 +629,11 @@ class TontineDetail {
   final List<PaymentEntry> payments;
   final Set<String> paidOutSlotIds;
 
-  /// In day order.
+  /// The skips that count, in day order.
   final List<SkippedDayRow> skippedDays;
+
+  /// Every skip, cancelled ones included, in day order.
+  final List<SkippedDayEntry> skipHistory;
 
   int halvesOf(String memberId) => slots
       .where((s) => s.memberId == memberId)

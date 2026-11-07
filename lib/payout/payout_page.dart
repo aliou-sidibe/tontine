@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../common/confirm_dialog.dart';
 import '../common/errors.dart';
 import '../common/format.dart';
 import '../common/theme.dart';
@@ -42,6 +43,18 @@ class _PayoutPageState extends ConsumerState<PayoutPage> {
   var _saving = false;
 
   Future<void> _confirm(String name, int handed) async {
+    final how = _method == PayoutMethod.cash
+        ? 'en espèces'
+        : 'par mobile money';
+    final confirmed = await confirmAction(
+      context,
+      title: 'Remettre ${formatFcfa(handed)} à ${firstName(name)} ?',
+      body:
+          'La remise $how est enregistrée aujourd’hui. Ensuite, elle ne '
+          's’annule que par une contre-écriture, depuis Tours.',
+      action: 'Remettre',
+    );
+    if (!confirmed || !mounted) return;
     setState(() => _saving = true);
     final messenger = ScaffoldMessenger.of(context);
     try {

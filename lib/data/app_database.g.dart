@@ -4147,10 +4147,6 @@ class $SkippedDaysTable extends SkippedDays
   @override
   Set<GeneratedColumn> get $primaryKey => {id};
   @override
-  List<Set<GeneratedColumn>> get uniqueKeys => [
-    {tontineId, day},
-  ];
-  @override
   SkippedDayRow map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return SkippedDayRow(
@@ -4394,6 +4390,287 @@ class SkippedDaysCompanion extends UpdateCompanion<SkippedDayRow> {
   }
 }
 
+class $SkippedDayCancellationsTable extends SkippedDayCancellations
+    with TableInfo<$SkippedDayCancellationsTable, SkippedDayCancellationRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $SkippedDayCancellationsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _skippedDayIdMeta = const VerificationMeta(
+    'skippedDayId',
+  );
+  @override
+  late final GeneratedColumn<String> skippedDayId = GeneratedColumn<String>(
+    'skipped_day_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES skipped_day (id)',
+    ),
+  );
+  static const VerificationMeta _reasonMeta = const VerificationMeta('reason');
+  @override
+  late final GeneratedColumn<String> reason = GeneratedColumn<String>(
+    'reason',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [skippedDayId, reason, createdAt];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'skipped_day_cancellation';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<SkippedDayCancellationRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('skipped_day_id')) {
+      context.handle(
+        _skippedDayIdMeta,
+        skippedDayId.isAcceptableOrUnknown(
+          data['skipped_day_id']!,
+          _skippedDayIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_skippedDayIdMeta);
+    }
+    if (data.containsKey('reason')) {
+      context.handle(
+        _reasonMeta,
+        reason.isAcceptableOrUnknown(data['reason']!, _reasonMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {skippedDayId};
+  @override
+  SkippedDayCancellationRow map(
+    Map<String, dynamic> data, {
+    String? tablePrefix,
+  }) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return SkippedDayCancellationRow(
+      skippedDayId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}skipped_day_id'],
+      )!,
+      reason: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}reason'],
+      ),
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+    );
+  }
+
+  @override
+  $SkippedDayCancellationsTable createAlias(String alias) {
+    return $SkippedDayCancellationsTable(attachedDatabase, alias);
+  }
+}
+
+class SkippedDayCancellationRow extends DataClass
+    implements Insertable<SkippedDayCancellationRow> {
+  final String skippedDayId;
+  final String? reason;
+  final DateTime createdAt;
+  const SkippedDayCancellationRow({
+    required this.skippedDayId,
+    this.reason,
+    required this.createdAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['skipped_day_id'] = Variable<String>(skippedDayId);
+    if (!nullToAbsent || reason != null) {
+      map['reason'] = Variable<String>(reason);
+    }
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  SkippedDayCancellationsCompanion toCompanion(bool nullToAbsent) {
+    return SkippedDayCancellationsCompanion(
+      skippedDayId: Value(skippedDayId),
+      reason: reason == null && nullToAbsent
+          ? const Value.absent()
+          : Value(reason),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory SkippedDayCancellationRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return SkippedDayCancellationRow(
+      skippedDayId: serializer.fromJson<String>(json['skippedDayId']),
+      reason: serializer.fromJson<String?>(json['reason']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'skippedDayId': serializer.toJson<String>(skippedDayId),
+      'reason': serializer.toJson<String?>(reason),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  SkippedDayCancellationRow copyWith({
+    String? skippedDayId,
+    Value<String?> reason = const Value.absent(),
+    DateTime? createdAt,
+  }) => SkippedDayCancellationRow(
+    skippedDayId: skippedDayId ?? this.skippedDayId,
+    reason: reason.present ? reason.value : this.reason,
+    createdAt: createdAt ?? this.createdAt,
+  );
+  SkippedDayCancellationRow copyWithCompanion(
+    SkippedDayCancellationsCompanion data,
+  ) {
+    return SkippedDayCancellationRow(
+      skippedDayId: data.skippedDayId.present
+          ? data.skippedDayId.value
+          : this.skippedDayId,
+      reason: data.reason.present ? data.reason.value : this.reason,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SkippedDayCancellationRow(')
+          ..write('skippedDayId: $skippedDayId, ')
+          ..write('reason: $reason, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(skippedDayId, reason, createdAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is SkippedDayCancellationRow &&
+          other.skippedDayId == this.skippedDayId &&
+          other.reason == this.reason &&
+          other.createdAt == this.createdAt);
+}
+
+class SkippedDayCancellationsCompanion
+    extends UpdateCompanion<SkippedDayCancellationRow> {
+  final Value<String> skippedDayId;
+  final Value<String?> reason;
+  final Value<DateTime> createdAt;
+  final Value<int> rowid;
+  const SkippedDayCancellationsCompanion({
+    this.skippedDayId = const Value.absent(),
+    this.reason = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  SkippedDayCancellationsCompanion.insert({
+    required String skippedDayId,
+    this.reason = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : skippedDayId = Value(skippedDayId);
+  static Insertable<SkippedDayCancellationRow> custom({
+    Expression<String>? skippedDayId,
+    Expression<String>? reason,
+    Expression<DateTime>? createdAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (skippedDayId != null) 'skipped_day_id': skippedDayId,
+      if (reason != null) 'reason': reason,
+      if (createdAt != null) 'created_at': createdAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  SkippedDayCancellationsCompanion copyWith({
+    Value<String>? skippedDayId,
+    Value<String?>? reason,
+    Value<DateTime>? createdAt,
+    Value<int>? rowid,
+  }) {
+    return SkippedDayCancellationsCompanion(
+      skippedDayId: skippedDayId ?? this.skippedDayId,
+      reason: reason ?? this.reason,
+      createdAt: createdAt ?? this.createdAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (skippedDayId.present) {
+      map['skipped_day_id'] = Variable<String>(skippedDayId.value);
+    }
+    if (reason.present) {
+      map['reason'] = Variable<String>(reason.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SkippedDayCancellationsCompanion(')
+          ..write('skippedDayId: $skippedDayId, ')
+          ..write('reason: $reason, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -4409,6 +4686,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       $PayoutCancellationsTable(this);
   late final $TourSwapsTable tourSwaps = $TourSwapsTable(this);
   late final $SkippedDaysTable skippedDays = $SkippedDaysTable(this);
+  late final $SkippedDayCancellationsTable skippedDayCancellations =
+      $SkippedDayCancellationsTable(this);
   late final Index memberTontine = Index(
     'member_tontine',
     'CREATE INDEX member_tontine ON member (tontine_id)',
@@ -4448,6 +4727,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     payoutCancellations,
     tourSwaps,
     skippedDays,
+    skippedDayCancellations,
     memberTontine,
     slotTontineTour,
     paymentMember,
@@ -8738,6 +9018,31 @@ final class $$SkippedDaysTableReferences
       manager.$state.copyWith(prefetchedData: [item]),
     );
   }
+
+  static MultiTypedResultKey<
+    $SkippedDayCancellationsTable,
+    List<SkippedDayCancellationRow>
+  >
+  _skippedDayCancellationsRefsTable(_$AppDatabase db) =>
+      MultiTypedResultKey.fromTable(
+        db.skippedDayCancellations,
+        aliasName: 'skipped_day__id__skipped_day_cancellation__skipped_day_id',
+      );
+
+  $$SkippedDayCancellationsTableProcessedTableManager
+  get skippedDayCancellationsRefs {
+    final manager = $$SkippedDayCancellationsTableTableManager(
+      $_db,
+      $_db.skippedDayCancellations,
+    ).filter((f) => f.skippedDayId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(
+      _skippedDayCancellationsRefsTable($_db),
+    );
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
 }
 
 class $$SkippedDaysTableFilterComposer
@@ -8790,6 +9095,32 @@ class $$SkippedDaysTableFilterComposer
           ),
     );
     return composer;
+  }
+
+  Expression<bool> skippedDayCancellationsRefs(
+    Expression<bool> Function($$SkippedDayCancellationsTableFilterComposer f) f,
+  ) {
+    final $$SkippedDayCancellationsTableFilterComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.id,
+          referencedTable: $db.skippedDayCancellations,
+          getReferencedColumn: (t) => t.skippedDayId,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$SkippedDayCancellationsTableFilterComposer(
+                $db: $db,
+                $table: $db.skippedDayCancellations,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return f(composer);
   }
 }
 
@@ -8889,6 +9220,33 @@ class $$SkippedDaysTableAnnotationComposer
     );
     return composer;
   }
+
+  Expression<T> skippedDayCancellationsRefs<T extends Object>(
+    Expression<T> Function($$SkippedDayCancellationsTableAnnotationComposer a)
+    f,
+  ) {
+    final $$SkippedDayCancellationsTableAnnotationComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.id,
+          referencedTable: $db.skippedDayCancellations,
+          getReferencedColumn: (t) => t.skippedDayId,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$SkippedDayCancellationsTableAnnotationComposer(
+                $db: $db,
+                $table: $db.skippedDayCancellations,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return f(composer);
+  }
 }
 
 class $$SkippedDaysTableTableManager
@@ -8904,7 +9262,10 @@ class $$SkippedDaysTableTableManager
           $$SkippedDaysTableUpdateCompanionBuilder,
           (SkippedDayRow, $$SkippedDaysTableReferences),
           SkippedDayRow,
-          PrefetchHooks Function({bool tontineId})
+          PrefetchHooks Function({
+            bool tontineId,
+            bool skippedDayCancellationsRefs,
+          })
         > {
   $$SkippedDaysTableTableManager(_$AppDatabase db, $SkippedDaysTable table)
     : super(
@@ -8957,7 +9318,332 @@ class $$SkippedDaysTableTableManager
                 ),
               )
               .toList(),
-          prefetchHooksCallback: ({tontineId = false}) {
+          prefetchHooksCallback:
+              ({tontineId = false, skippedDayCancellationsRefs = false}) {
+                return PrefetchHooks(
+                  db: db,
+                  explicitlyWatchedTables: [
+                    if (skippedDayCancellationsRefs) db.skippedDayCancellations,
+                  ],
+                  addJoins:
+                      <
+                        T extends TableManagerState<
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic
+                        >
+                      >(state) {
+                        if (tontineId) {
+                          state = state.withJoin(
+                            currentTable: table,
+                            currentColumn: table.tontineId,
+                            referencedTable: $$SkippedDaysTableReferences
+                                ._tontineIdTable(db),
+                            referencedColumn: $$SkippedDaysTableReferences
+                                ._tontineIdTable(db)
+                                .id,
+                          ) as T;
+                        }
+
+                        return state;
+                      },
+                  getPrefetchedDataCallback: (items) async {
+                    return [
+                      if (skippedDayCancellationsRefs)
+                        await $_getPrefetchedDataByColumns<
+                          SkippedDayRow,
+                          $SkippedDaysTable,
+                          SkippedDayCancellationRow,
+                          $SkippedDayCancellationsTable
+                        >(
+                          currentTable: table,
+                          referencedTable: $$SkippedDaysTableReferences
+                              ._skippedDayCancellationsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$SkippedDaysTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).skippedDayCancellationsRefs,
+                          currentColumn: 'id',
+                          referencedColumn: 'skipped_day_id',
+                          typedResults: items,
+                        ),
+                    ];
+                  },
+                );
+              },
+        ),
+      );
+}
+
+typedef $$SkippedDaysTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $SkippedDaysTable,
+      SkippedDayRow,
+      $$SkippedDaysTableFilterComposer,
+      $$SkippedDaysTableOrderingComposer,
+      $$SkippedDaysTableAnnotationComposer,
+      $$SkippedDaysTableCreateCompanionBuilder,
+      $$SkippedDaysTableUpdateCompanionBuilder,
+      (SkippedDayRow, $$SkippedDaysTableReferences),
+      SkippedDayRow,
+      PrefetchHooks Function({bool tontineId, bool skippedDayCancellationsRefs})
+    >;
+typedef $$SkippedDayCancellationsTableCreateCompanionBuilder =
+    SkippedDayCancellationsCompanion Function({
+      required String skippedDayId,
+      Value<String?> reason,
+      Value<DateTime> createdAt,
+      Value<int> rowid,
+    });
+typedef $$SkippedDayCancellationsTableUpdateCompanionBuilder =
+    SkippedDayCancellationsCompanion Function({
+      Value<String> skippedDayId,
+      Value<String?> reason,
+      Value<DateTime> createdAt,
+      Value<int> rowid,
+    });
+
+final class $$SkippedDayCancellationsTableReferences
+    extends
+        BaseReferences<
+          _$AppDatabase,
+          $SkippedDayCancellationsTable,
+          SkippedDayCancellationRow
+        > {
+  $$SkippedDayCancellationsTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $SkippedDaysTable _skippedDayIdTable(_$AppDatabase db) => db
+      .skippedDays
+      .createAlias('skipped_day_cancellation__skipped_day_id__skipped_day__id');
+
+  $$SkippedDaysTableProcessedTableManager get skippedDayId {
+    final $_column = $_itemColumn<String>('skipped_day_id')!;
+
+    final manager = $$SkippedDaysTableTableManager(
+      $_db,
+      $_db.skippedDays,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_skippedDayIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$SkippedDayCancellationsTableFilterComposer
+    extends Composer<_$AppDatabase, $SkippedDayCancellationsTable> {
+  $$SkippedDayCancellationsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get reason => $composableBuilder(
+    column: $table.reason,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$SkippedDaysTableFilterComposer get skippedDayId {
+    final $$SkippedDaysTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.skippedDayId,
+      referencedTable: $db.skippedDays,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$SkippedDaysTableFilterComposer(
+            $db: $db,
+            $table: $db.skippedDays,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$SkippedDayCancellationsTableOrderingComposer
+    extends Composer<_$AppDatabase, $SkippedDayCancellationsTable> {
+  $$SkippedDayCancellationsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get reason => $composableBuilder(
+    column: $table.reason,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$SkippedDaysTableOrderingComposer get skippedDayId {
+    final $$SkippedDaysTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.skippedDayId,
+      referencedTable: $db.skippedDays,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$SkippedDaysTableOrderingComposer(
+            $db: $db,
+            $table: $db.skippedDays,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$SkippedDayCancellationsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $SkippedDayCancellationsTable> {
+  $$SkippedDayCancellationsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get reason =>
+      $composableBuilder(column: $table.reason, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  $$SkippedDaysTableAnnotationComposer get skippedDayId {
+    final $$SkippedDaysTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.skippedDayId,
+      referencedTable: $db.skippedDays,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$SkippedDaysTableAnnotationComposer(
+            $db: $db,
+            $table: $db.skippedDays,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$SkippedDayCancellationsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $SkippedDayCancellationsTable,
+          SkippedDayCancellationRow,
+          $$SkippedDayCancellationsTableFilterComposer,
+          $$SkippedDayCancellationsTableOrderingComposer,
+          $$SkippedDayCancellationsTableAnnotationComposer,
+          $$SkippedDayCancellationsTableCreateCompanionBuilder,
+          $$SkippedDayCancellationsTableUpdateCompanionBuilder,
+          (SkippedDayCancellationRow, $$SkippedDayCancellationsTableReferences),
+          SkippedDayCancellationRow,
+          PrefetchHooks Function({bool skippedDayId})
+        > {
+  $$SkippedDayCancellationsTableTableManager(
+    _$AppDatabase db,
+    $SkippedDayCancellationsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$SkippedDayCancellationsTableFilterComposer(
+                $db: db,
+                $table: table,
+              ),
+          createOrderingComposer: () =>
+              $$SkippedDayCancellationsTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$SkippedDayCancellationsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> skippedDayId = const Value.absent(),
+                Value<String?> reason = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => SkippedDayCancellationsCompanion(
+                skippedDayId: skippedDayId,
+                reason: reason,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String skippedDayId,
+                Value<String?> reason = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => SkippedDayCancellationsCompanion.insert(
+                skippedDayId: skippedDayId,
+                reason: reason,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<
+                    $SkippedDayCancellationsTable,
+                    SkippedDayCancellationRow
+                  >(table),
+                  $$SkippedDayCancellationsTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({skippedDayId = false}) {
             return PrefetchHooks(
               db: db,
               explicitlyWatchedTables: [],
@@ -8977,15 +9663,17 @@ class $$SkippedDaysTableTableManager
                       dynamic
                     >
                   >(state) {
-                    if (tontineId) {
+                    if (skippedDayId) {
                       state = state.withJoin(
                         currentTable: table,
-                        currentColumn: table.tontineId,
-                        referencedTable: $$SkippedDaysTableReferences
-                            ._tontineIdTable(db),
-                        referencedColumn: $$SkippedDaysTableReferences
-                            ._tontineIdTable(db)
-                            .id,
+                        currentColumn: table.skippedDayId,
+                        referencedTable:
+                            $$SkippedDayCancellationsTableReferences
+                                ._skippedDayIdTable(db),
+                        referencedColumn:
+                            $$SkippedDayCancellationsTableReferences
+                                ._skippedDayIdTable(db)
+                                .id,
                       ) as T;
                     }
 
@@ -9000,19 +9688,19 @@ class $$SkippedDaysTableTableManager
       );
 }
 
-typedef $$SkippedDaysTableProcessedTableManager =
+typedef $$SkippedDayCancellationsTableProcessedTableManager =
     ProcessedTableManager<
       _$AppDatabase,
-      $SkippedDaysTable,
-      SkippedDayRow,
-      $$SkippedDaysTableFilterComposer,
-      $$SkippedDaysTableOrderingComposer,
-      $$SkippedDaysTableAnnotationComposer,
-      $$SkippedDaysTableCreateCompanionBuilder,
-      $$SkippedDaysTableUpdateCompanionBuilder,
-      (SkippedDayRow, $$SkippedDaysTableReferences),
-      SkippedDayRow,
-      PrefetchHooks Function({bool tontineId})
+      $SkippedDayCancellationsTable,
+      SkippedDayCancellationRow,
+      $$SkippedDayCancellationsTableFilterComposer,
+      $$SkippedDayCancellationsTableOrderingComposer,
+      $$SkippedDayCancellationsTableAnnotationComposer,
+      $$SkippedDayCancellationsTableCreateCompanionBuilder,
+      $$SkippedDayCancellationsTableUpdateCompanionBuilder,
+      (SkippedDayCancellationRow, $$SkippedDayCancellationsTableReferences),
+      SkippedDayCancellationRow,
+      PrefetchHooks Function({bool skippedDayId})
     >;
 
 class $AppDatabaseManager {
@@ -9038,4 +9726,9 @@ class $AppDatabaseManager {
       $$TourSwapsTableTableManager(_db, _db.tourSwaps);
   $$SkippedDaysTableTableManager get skippedDays =>
       $$SkippedDaysTableTableManager(_db, _db.skippedDays);
+  $$SkippedDayCancellationsTableTableManager get skippedDayCancellations =>
+      $$SkippedDayCancellationsTableTableManager(
+        _db,
+        _db.skippedDayCancellations,
+      );
 }

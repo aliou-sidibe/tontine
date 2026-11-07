@@ -92,4 +92,31 @@ void main() {
       throwsStateError,
     );
   });
+
+  test(
+    'a cancelled skip stays in the history and can be skipped again',
+    () async {
+      await skip([Day(2026, 11, 8)], reason: 'Fête');
+      final row = (await repository.detail(tontineId)).skippedDays.single;
+      await repository.unskipDay(row.id, today: today, reason: ' erreur ');
+
+      var detail = await repository.detail(tontineId);
+      expect(detail.skippedDays, isEmpty);
+      expect(detail.skipHistory, hasLength(1));
+      expect(detail.skipHistory.single.cancelled, isTrue);
+      expect(detail.skipHistory.single.cancelReason, 'erreur');
+      expect(
+        () => repository.unskipDay(row.id, today: today),
+        throwsStateError,
+      );
+
+      await skip([Day(2026, 11, 8)], reason: 'Marché fermé');
+      detail = await repository.detail(tontineId);
+      expect(detail.skippedDays.single.reason, 'Marché fermé');
+      expect(detail.skipHistory.map((e) => e.cancelled), [true, false]);
+      expect(detail.terms.payoutDay(4), Day(2026, 11, 10));
+      // Skipped (again), it cannot be skipped twice.
+      expect(() => skip([Day(2026, 11, 8)]), throwsStateError);
+    },
+  );
 }

@@ -93,6 +93,19 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text(nb('Confirmer la remise de 995 000 F')));
     await tester.pumpAndSettle();
+    // Asked once more before the money is handed out.
+    expect(find.text(nb('Remettre 995 000 F à Koffi ?')), findsOneWidget);
+    expect(
+      find.text(
+        'La remise par mobile money est enregistrée aujourd’hui. Ensuite, '
+        'elle ne s’annule que par une contre-écriture, depuis Tours.',
+      ),
+      findsOneWidget,
+    );
+    // Tours 1 to 3 only: nothing recorded before "Remettre".
+    expect(await db.select(db.payouts).get(), hasLength(3));
+    await tester.tap(find.widgetWithText(TextButton, 'Remettre'));
+    await tester.pumpAndSettle();
 
     expect(find.text('Remise de la cagnotte'), findsNothing);
     final payout = await db
@@ -109,6 +122,9 @@ void main() {
   });
 
   testWidgets('two tours are swapped from "Tours"', (tester) async {
+    const swapBody =
+        'Fatou Bamba et Aminata Koné ramasseront au tour 12, le jeu. 28 '
+        'janv., et Awa Koné au tour 9, le mar. 29 déc.';
     // A tall phone: the 20 tours fit without scrolling.
     tester.view.physicalSize = const Size(390, 1800) * 3;
     tester.view.devicePixelRatio = 3;
@@ -133,6 +149,18 @@ void main() {
     await tester.tap(find.text('Awa Koné'));
     await tester.pump();
     await tester.tap(find.text('Échanger les tours 9 et 12'));
+    await tester.pumpAndSettle();
+    expect(find.text('Échanger les tours 9 et 12 ?'), findsOneWidget);
+    // The sentence ends on an abbreviated date: one full stop only.
+    expect(find.text(swapBody), findsOneWidget);
+    // "Retour" changes nothing.
+    await tester.tap(find.widgetWithText(TextButton, 'Retour'));
+    await tester.pumpAndSettle();
+    expect(await db.select(db.tourSwaps).get(), isEmpty);
+
+    await tester.tap(find.text('Échanger les tours 9 et 12'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(TextButton, 'Échanger'));
     await tester.pumpAndSettle();
 
     final awa = await memberId(db, 'Awa Koné');
