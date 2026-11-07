@@ -103,7 +103,7 @@ class TontineRepository {
   }
 
   Future<TontineCard> _card(TontineRow tontine, Day today) async {
-    final terms = termsOf(tontine);
+    final terms = termsOf(tontine, await _skippedDays(tontine.id));
     final members = await (_db.select(
       _db.members,
     )..where((m) => m.tontineId.equals(tontine.id))).get();
@@ -193,10 +193,11 @@ class TontineRepository {
               ..where((p) => p.tontineId.equals(tontineId))
               ..orderBy([(p) => OrderingTerm.asc(p.createdAt)]))
             .get();
+    final skippedDays = await _skippedDays(tontineId);
     return TontineDetail(
       id: tontine.id,
       name: tontine.name,
-      terms: termsOf(tontine),
+      terms: termsOf(tontine, skippedDays),
       members: members,
       slots: slots,
       payouts: [
@@ -216,7 +217,88 @@ class TontineRepository {
           ),
       ],
       paidOutSlotIds: await paidOutSlotIds(tontineId),
+      skippedDays: skippedDays,
     );
+  }
+
+  Future<List<SkippedDayRow>> _skippedDays(String tontineId) =>
+      (_db.select(_db.skippedDays)
+            ..where((d) => d.tontineId.equals(tontineId))
+            ..orderBy([(d) => OrderingTerm.asc(d.day)]))
+          .get();
+
+  /// Skips [days] for the whole tontine: nobody contributes on them, and
+  /// every later payout and the end move back. Only today or a later day,
+  /// before the end, and never a day on or before a pot already handed out.
+  Future<void> skipDays({
+    required String tontineId,
+    required Iterable<Day> days,
+    String? reason,
+    required Day today,
+  }) {
+    final chosen = days.toSet();
+    if (chosen.isEmpty) throw ArgumentError('No day to skip.');
+    final trimmed = reason?.trim();
+    return _db.transaction(() async {
+      final tontine = await (_db.select(
+        _db.tontines,
+      )..where((t) => t.id.equals(tontineId))).getSingle();
+      final existing = await _skippedDays(tontineId);
+      final terms = termsOf(tontine, existing);
+      final after = terms.withSkippedDays(chosen);
+      final end = after.dayOf(after.totalDays);
+      final lastPayout =
+          await (_db.selectOnly(_db.payouts)
+                ..addColumns([_db.payouts.paidOn.max()])
+                ..where(
+                  _db.payouts.tontineId.equals(tontineId) &
+                      _db.payouts.id.isNotInQuery(
+                        _db.selectOnly(_db.payoutCancellations)
+                          ..addColumns([_db.payoutCancellations.payoutId]),
+                      ),
+                ))
+              .map((r) => r.read(_db.payouts.paidOn.max()))
+              .getSingle();
+      for (final day in chosen) {
+        if (day.isBefore(today)) {
+          throw StateError('Only today or a later day can be skipped.');
+        }
+        if (terms.isSkipped(day)) throw StateError('$day is already skipped.');
+        if (day.isBefore(terms.firstDay) || day.isAfter(end)) {
+          throw StateError('$day is outside the tontine.');
+        }
+        if (lastPayout != null && !day.isAfter(Day.parse(lastPayout))) {
+          throw StateError('A pot was handed out on or after $day.');
+        }
+      }
+      for (final day in chosen) {
+        await _db
+            .into(_db.skippedDays)
+            .insert(
+              SkippedDaysCompanion.insert(
+                tontineId: tontineId,
+                day: day.toIso(),
+                reason: Value(
+                  trimmed == null || trimmed.isEmpty ? null : trimmed,
+                ),
+              ),
+            );
+      }
+    });
+  }
+
+  /// Contributes again on a skipped day that has not passed yet: it never
+  /// counted, so it leaves no trace.
+  Future<void> unskipDay(String skippedDayId, {required Day today}) async {
+    final row = await (_db.select(
+      _db.skippedDays,
+    )..where((d) => d.id.equals(skippedDayId))).getSingle();
+    if (Day.parse(row.day).isBefore(today)) {
+      throw StateError('A day already passed stays skipped.');
+    }
+    await (_db.delete(
+      _db.skippedDays,
+    )..where((d) => d.id.equals(skippedDayId))).go();
   }
 
   /// Records money received from a member. Append-only.
@@ -467,6 +549,7 @@ class TontineDetail {
     required this.payouts,
     required this.payments,
     required this.paidOutSlotIds,
+    required this.skippedDays,
   });
 
   final String id;
@@ -485,6 +568,9 @@ class TontineDetail {
   /// Newest first, cancelled ones included.
   final List<PaymentEntry> payments;
   final Set<String> paidOutSlotIds;
+
+  /// In day order.
+  final List<SkippedDayRow> skippedDays;
 
   int halvesOf(String memberId) => slots
       .where((s) => s.memberId == memberId)
@@ -589,12 +675,14 @@ class TontineDetail {
   );
 }
 
-TontineTerms termsOf(TontineRow row) => TontineTerms(
-  places: row.places,
-  contributionPerPlace: row.contributionPerPlace,
-  tourDays: row.tourDays,
-  firstDay: Day.parse(row.firstDay),
-);
+TontineTerms termsOf(TontineRow row, List<SkippedDayRow> skippedDays) =>
+    TontineTerms(
+      places: row.places,
+      contributionPerPlace: row.contributionPerPlace,
+      tourDays: row.tourDays,
+      firstDay: Day.parse(row.firstDay),
+      skippedDays: [for (final d in skippedDays) Day.parse(d.day)],
+    );
 
 final tontineRepositoryProvider = Provider<TontineRepository>((ref) {
   return TontineRepository(ref.watch(appDatabaseProvider));

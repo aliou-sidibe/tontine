@@ -201,3 +201,30 @@ class TourSwaps extends Table {
   @override
   Set<Column<Object>> get primaryKey => {id};
 }
+
+/// Days the whole tontine does not contribute (a feast, the market closed):
+/// every later contribution day, payout and the end move back by one day.
+/// Only today or a later day can be skipped; a skip is removed while its day
+/// has not passed, before it ever counted.
+@DataClassName('SkippedDayRow')
+@TableIndex(name: 'skipped_day_tontine', columns: {#tontineId})
+class SkippedDays extends Table {
+  @override
+  String get tableName => 'skipped_day';
+
+  TextColumn get id => text().clientDefault(newId)();
+  TextColumn get tontineId => text().references(Tontines, #id)();
+
+  /// The calendar day skipped, `yyyy-mm-dd`.
+  TextColumn get day => text().withLength(min: 10, max: 10)();
+  TextColumn get reason => text().nullable()();
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+
+  @override
+  List<Set<Column<Object>>> get uniqueKeys => [
+    {tontineId, day},
+  ];
+}

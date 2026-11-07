@@ -68,6 +68,8 @@ Future<Uint8List> buildStatementPdf(Statement s, StatementFonts fonts) {
         pw.Text(s.name, style: style(22, font: fonts.display)),
         pw.SizedBox(height: 2),
         pw.Text(s.dateLine, style: style(11, color: _secondary)),
+        if (s.skippedLine != null)
+          pw.Text(s.skippedLine!, style: style(10, color: _secondary)),
         pw.SizedBox(height: 14),
         pw.Container(
           padding: const pw.EdgeInsets.all(14),

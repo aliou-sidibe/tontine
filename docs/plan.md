@@ -13,7 +13,8 @@ Android traiterait l'appli comme une autre application.
 pour encaisser les cotisations, puis remet la cagnotte au bénéficiaire du tour.
 
 **Maquette validée :** [Ma Tontine — maquette](https://claude.ai/artifact/Ke5yYbUMEtzGqQ5SgH9htd),
-8 écrans. **L'appli la respecte à la lettre** : textes, couleurs, polices, tailles, espacements,
+8 écrans, et [Ma Tontine — jours sautés](https://claude.ai/artifact/2ReCrN8RcBdE9jgmAcUrZx),
+6 écrans. **L'appli la respecte à la lettre** : textes, couleurs, polices, tailles, espacements,
 ordre des éléments. Un écran absent de la maquette reprend exactement la même charte (voir
 [Charte graphique](#charte-graphique-relevée-dans-la-maquette)).
 
@@ -41,6 +42,10 @@ ordre des éléments. Un écran absent de la maquette reprend exactement la mêm
   - le bénéficiaire est lui-même en retard : **son retard est retenu sur sa cagnotte**, et il est
     remis à jour.
 - **Ni commission, ni pénalité de retard.**
+- **Jours sautés** (fêtes, marché fermé, imprévu) : ces jours-là, personne ne cotise, et tout ce
+  qui suit recule d'autant (ramassages, fin de la tontine). On ne saute qu'aujourd'hui ou un jour
+  à venir, jamais un jour où une cagnotte a déjà été remise. Un saut s'annule tant que son jour
+  n'est pas passé, depuis l'écran « Jours sautés » seulement.
 - **Paiements : espèces ou mobile money**, sans intégration d'API (simple mention).
 - **Saisie d'un versement uniquement par appui long** sur le membre. Un appui simple ne fait rien
   (évite les erreurs). Le pavé s'ouvre pré-rempli avec la cotisation du jour.
@@ -119,6 +124,7 @@ ni ne se supprime, il s'annule par une contre-écriture (même principe qu'IP Ca
 | `payout` | une remise : tontine, part (`slot`), jour, cagnotte, complément de l'organisateur, retenue, montant remis, mode, création. |
 | `payout_cancellation` | remise annulée, motif, création. |
 | `tour_swap` | échange : tontine, tour A, tour B, création. Les parts sont échangées dans la même transaction. |
+| `skipped_day` | jour sauté : tontine, jour, motif (facultatif), création ; un seul par tontine et par jour. Schéma v2. |
 
 ## Écrans
 
@@ -246,6 +252,24 @@ Durées estimées pour un développeur seul. **Total : environ 3 à 5 semaines.*
 | 5 | Partage | PDF de l'état (qui a payé, qui doit combien, prochains tours), partage WhatsApp | L'état part sur WhatsApp en deux appuis | 2–3 j |
 | 6 | Sauvegarde | Export / import chiffré, rappel | Une restauration sur un **autre** téléphone retrouve tout | 1–2 j |
 | 7 | Pilote | Une à deux semaines d'utilisation réelle, corrections | Plus de retour au cahier | 1–2 sem. |
+
+**Jours sautés (7 novembre 2026) :** développés et testés selon la maquette « jours sautés »
+validée. L'appli compte en jours de cotisation : un jour sauté garde le numéro de la veille
+(« Jour 36 sur 200 » le jour sauté, puis jour 37 le lendemain) et ne crée aucun « À encaisser » ;
+les vrais retards restent. Ce qui a été encaissé le jour même reste acquis et compte pour les
+jours suivants. Sont faits :
+- le bouton « Sauter aujourd'hui » à droite de la date sur « Aujourd'hui », et sa feuille (motif,
+  effet calculé : nouvelle date du ramassage en cours et de la fin) ;
+- le bandeau gris « Jour sauté · pas de cotisation » (sans annulation, demandé), la tuile
+  « jour sauté · rien n'est dû » ;
+- dans « Tours », la ligne « Jours sautés » ; l'écran « Jours sautés » (fin de la tontine, liste,
+  « Annuler » tant que le jour n'est pas passé) et « Sauter des jours » (calendrier du mois,
+  plusieurs jours, motif, effet) ;
+- la ligne « Jours sautés : 8 nov., 11 nov. » dans le PDF.
+
+Schéma de la base en version 2 (table `skipped_day`), avec sa migration testée : les données
+existantes et les sauvegardes faites avant restent lisibles. Un saut annulé est supprimé, sans
+trace : il n'a jamais compté.
 
 **Ramassage le jour J (6 novembre 2026) :** la cagnotte se remet le dernier jour du tour, et non
 plus le lendemain. Tout le calendrier avance d'un jour (tour 4 : lun. 9 nov. au lieu du mar. 10

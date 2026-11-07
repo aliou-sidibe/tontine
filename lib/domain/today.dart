@@ -63,6 +63,7 @@ class TodayView {
     required this.collectedToday,
     required this.expectedToday,
     required this.lines,
+    required this.todaySkipped,
     required this.pendingShares,
   });
 
@@ -84,6 +85,9 @@ class TodayView {
 
   /// Members in display order: late, to collect, up to date, ahead.
   final List<MemberLine> lines;
+
+  /// Today is a skipped day: nothing is due today.
+  final bool todaySkipped;
 
   /// Shares of the current tour whose pot is not handed out yet, in tour
   /// order.
@@ -151,6 +155,7 @@ TodayView todayView(
               halves: m.halves,
               paid: m.paid,
               today: dayNumber,
+              yesterday: terms.dayNumber(today.addDays(-1)),
             ),
             advance: organizerAdvance(
               terms,
@@ -178,7 +183,9 @@ TodayView todayView(
         MemberAccount(id: m.id, halves: m.halves, paid: m.paid),
     ],
   );
-  final contributing = dayNumber >= 1 && dayNumber <= terms.totalDays;
+  final skipped = terms.isSkipped(today);
+  final contributing =
+      !skipped && dayNumber >= 1 && dayNumber <= terms.totalDays;
 
   return TodayView(
     dayNumber: dayNumber,
@@ -191,6 +198,7 @@ TodayView todayView(
     collectedToday: members.fold(0, (sum, m) => sum + m.paidToday),
     expectedToday: contributing ? terms.dailyTotal : 0,
     lines: lines,
+    todaySkipped: skipped,
     pendingShares: [
       for (final s in slots)
         if (s.tour == overview.currentTour && !paidOutSlotIds.contains(s.id)) s,

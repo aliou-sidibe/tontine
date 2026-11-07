@@ -11,6 +11,8 @@ import '../domain/standing.dart';
 import '../domain/today.dart';
 import '../domain/tontine_terms.dart';
 import '../payout/payout_page.dart';
+import '../skips/skip_texts.dart';
+import '../skips/skip_today_sheet.dart';
 import 'payment_sheet.dart';
 import 'today_texts.dart';
 
@@ -70,7 +72,18 @@ class _TodayPageState extends ConsumerState<TodayPage> {
                             terms: detail.terms,
                             view: view,
                             today: today,
+                            onSkipToday: _canSkipToday(detail, view, today)
+                                ? () => showSkipTodaySheet(
+                                    context,
+                                    detail: detail,
+                                    today: today,
+                                  )
+                                : null,
                           ),
+                          if (view.todaySkipped)
+                            _SkippedBanner(
+                              line: skippedTodayLine(detail, today),
+                            ),
                           _TourCard(
                             terms: detail.terms,
                             view: view,
@@ -161,10 +174,17 @@ class _TodayPageState extends ConsumerState<TodayPage> {
                   ],
                 ),
               ),
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
                 child: Text(
-                  'Appui long sur un membre pour enregistrer un versement',
+                  view.todaySkipped
+                      ? 'Appui long sur un membre pour enregistrer un '
+                            'rattrapage'
+                      : 'Appui long sur un membre pour enregistrer un '
+                            'versement',
                   textAlign: TextAlign.center,
                   style: AppText.small,
                 ),
@@ -177,18 +197,30 @@ class _TodayPageState extends ConsumerState<TodayPage> {
   }
 }
 
+/// Today can be skipped: a contribution day of the tontine, not skipped yet,
+/// and no pot handed out today (its amounts would no longer match).
+bool _canSkipToday(TontineDetail detail, TodayView view, Day today) =>
+    !view.todaySkipped &&
+    view.dayNumber >= 1 &&
+    view.dayNumber <= detail.terms.totalDays &&
+    !detail.payouts.any((p) => !p.cancelled && p.row.paidOn == today.toIso());
+
 class _Header extends StatelessWidget {
   const _Header({
     required this.name,
     required this.terms,
     required this.view,
     required this.today,
+    required this.onSkipToday,
   });
 
   final String name;
   final TontineTerms terms;
   final TodayView view;
   final Day today;
+
+  /// "Sauter aujourd'hui", when today can be skipped.
+  final VoidCallback? onSkipToday;
 
   @override
   Widget build(BuildContext context) {
@@ -214,48 +246,134 @@ class _Header extends StatelessWidget {
             ),
             style: AppText.screenTitle,
           );
+    final changeTontine = SizedBox(
+      width: 44,
+      height: 44,
+      child: OutlinedButton(
+        style: OutlinedButton.styleFrom(
+          padding: EdgeInsets.zero,
+          minimumSize: const Size(44, 44),
+          shape: const CircleBorder(),
+        ),
+        // Back to "Mes tontines" to pick another tontine.
+        onPressed: () => Navigator.of(context, rootNavigator: true).pop(),
+        child: const Icon(
+          Icons.unfold_more,
+          size: 20,
+          semanticLabel: 'Changer de tontine',
+        ),
+      ),
+    );
+    final skip = onSkipToday;
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        spacing: 12,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        spacing: 2,
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              spacing: 2,
-              children: [
-                Text(name, style: AppText.caption),
-                title,
-                Text(
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            spacing: 12,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  spacing: 2,
+                  children: [
+                    Text(name, style: AppText.caption),
+                    title,
+                  ],
+                ),
+              ),
+              changeTontine,
+            ],
+          ),
+          // Mockup "Jours sautés": the date on the left, "Sauter
+          // aujourd'hui" against the right edge.
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            spacing: 8,
+            children: [
+              Flexible(
+                child: Text(
                   formatDay(today, withYear: true),
                   style: const TextStyle(
                     fontSize: 13,
                     color: AppColors.textSecondary,
                   ),
                 ),
-              ],
-            ),
-          ),
-          SizedBox(
-            width: 44,
-            height: 44,
-            child: OutlinedButton(
-              style: OutlinedButton.styleFrom(
-                padding: EdgeInsets.zero,
-                minimumSize: const Size(44, 44),
-                shape: const CircleBorder(),
               ),
-              // Back to "Mes tontines" to pick another tontine.
-              onPressed: () => Navigator.of(context, rootNavigator: true).pop(),
-              child: const Icon(
-                Icons.unfold_more,
-                size: 20,
-                semanticLabel: 'Changer de tontine',
-              ),
-            ),
+              if (skip != null)
+                OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size(44, 32),
+                    tapTargetSize: MaterialTapTargetSize.padded,
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    shape: const StadiumBorder(),
+                    textStyle: const TextStyle(
+                      fontFamily: AppFonts.text,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  onPressed: skip,
+                  icon: const Icon(Icons.event_busy_outlined, size: 14),
+                  label: const Text('Sauter aujourd’hui'),
+                ),
+            ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Mockup "Jours sautés", board 3: "Jour sauté · pas de cotisation" in grey,
+/// with the reason and when contributions resume. It cancels nothing: that
+/// is done from "Jours sautés".
+class _SkippedBanner extends StatelessWidget {
+  const _SkippedBanner({required this.line});
+
+  final String line;
+
+  @override
+  Widget build(BuildContext context) {
+    const color = AppColors.onNeutralPale;
+    return Semantics(
+      liveRegion: true,
+      child: Container(
+        margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          color: AppColors.neutralPale,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          spacing: 12,
+          children: [
+            const Icon(Icons.event_busy_outlined, size: 22, color: color),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                spacing: 1,
+                children: [
+                  const Text(
+                    'Jour sauté · pas de cotisation',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: color,
+                    ),
+                  ),
+                  Text(
+                    line,
+                    style: const TextStyle(fontSize: 12, color: color),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -394,7 +512,9 @@ class _CollectedTile extends StatelessWidget {
       valueColor: AppColors.text,
       label: 'Encaissé aujourd\'hui',
       value: formatFcfa(view.collectedToday),
-      caption: 'sur ${formatFcfa(view.expectedToday)}',
+      caption: view.todaySkipped
+          ? 'jour sauté · rien n’est dû'
+          : 'sur ${formatFcfa(view.expectedToday)}',
     );
   }
 }

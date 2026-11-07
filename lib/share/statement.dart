@@ -30,6 +30,7 @@ class Statement {
   const Statement({
     required this.name,
     required this.dateLine,
+    required this.skippedLine,
     required this.tourTitle,
     required this.tourLine,
     required this.progress,
@@ -43,6 +44,9 @@ class Statement {
 
   /// "État au ven. 6 nov. 2026 · jour 37 sur 200".
   final String dateLine;
+
+  /// "Jours sautés : 8 nov., 11 nov.", or null when none.
+  final String? skippedLine;
 
   /// "Tour 4 sur 20 · Koffi Yao ramasse".
   final String tourTitle;
@@ -81,6 +85,10 @@ Statement statementOf(TontineDetail detail, Day today) {
         ? 'État au ${formatDay(today, withYear: true)} · avant le début'
         : 'État au ${formatDay(today, withYear: true)} · jour $day sur '
               '${terms.totalDays}',
+    skippedLine: terms.skippedDays.isEmpty
+        ? null
+        : 'Jours sautés : '
+              '${terms.skippedDays.map(formatDayShort).join(', ')}',
     tourTitle:
         'Tour ${view.currentTour} sur ${terms.tours} · '
         '${collectorsTitle([for (final id in view.beneficiaryIds) names[id] ?? ''])}',

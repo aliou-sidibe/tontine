@@ -43,14 +43,18 @@ class Standing {
 
 /// Standing of a member holding [halves] half places on [today] (a day
 /// number), given everything [paid] so far.
+///
+/// [yesterday] is the day number of the calendar day before: `today - 1`,
+/// or `today` itself on a skipped day, when nothing is to collect.
 Standing standingOf(
   TontineTerms terms, {
   required int halves,
   required int paid,
   required int today,
+  int? yesterday,
 }) {
   final due = terms.dueThrough(halves, today);
-  final dueYesterday = terms.dueThrough(halves, today - 1);
+  final dueYesterday = terms.dueThrough(halves, yesterday ?? today - 1);
   final daily = terms.dailyDue(halves);
   var upToDay = daily == 0 ? 0 : paid ~/ daily;
   if (upToDay > terms.totalDays) upToDay = terms.totalDays;

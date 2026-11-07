@@ -164,7 +164,10 @@ void main() {
   });
 
   testWidgets('a payout is cancelled from "Tours"', (tester) async {
-    usePhone(tester);
+    // A tall phone: tour 3 shows without scrolling.
+    tester.view.physicalSize = const Size(390, 1800) * 3;
+    tester.view.devicePixelRatio = 3;
+    addTearDown(tester.view.reset);
     final id = await seedMockupTontine(db);
     await tester.pumpWidget(testApp(TontineHome(tontineId: id), db));
     await tester.pumpAndSettle();

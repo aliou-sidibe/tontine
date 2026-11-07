@@ -4,17 +4,22 @@ import 'day.dart';
 /// that every amount stays an integer.
 const halvesPerPlace = 2;
 
-/// The fixed terms of a tontine, chosen at creation.
+/// The terms of a tontine, chosen at creation, and the days it skipped.
 ///
-/// Day numbers start at 1 on [firstDay]. One place equals one tour equals
-/// one pot, so there are as many tours as [places].
+/// Day numbers count contribution days: 1 on [firstDay], and a skipped day
+/// does not count. One place equals one tour equals one pot, so there are as
+/// many tours as [places].
 class TontineTerms {
   TontineTerms({
     required this.places,
     required this.contributionPerPlace,
     required this.tourDays,
     required this.firstDay,
-  }) {
+    Iterable<Day> skippedDays = const [],
+  }) : skippedDays = List.unmodifiable(
+         skippedDays.where((d) => !d.isBefore(firstDay)).toSet().toList()
+           ..sort(),
+       ) {
     if (places < 1) throw ArgumentError.value(places, 'places');
     if (tourDays < 1) throw ArgumentError.value(tourDays, 'tourDays');
     if (contributionPerPlace <= 0 || contributionPerPlace % 10 != 0) {
@@ -35,6 +40,20 @@ class TontineTerms {
   /// Day 1 of the tontine.
   final Day firstDay;
 
+  /// Calendar days without contribution, from [firstDay] on, in order.
+  final List<Day> skippedDays;
+
+  /// The same terms with [days] skipped (the days already skipped stay).
+  TontineTerms withSkippedDays(Iterable<Day> days) => TontineTerms(
+    places: places,
+    contributionPerPlace: contributionPerPlace,
+    tourDays: tourDays,
+    firstDay: firstDay,
+    skippedDays: [...skippedDays, ...days],
+  );
+
+  bool isSkipped(Day day) => skippedDays.contains(day);
+
   int get tours => places;
 
   int get totalDays => places * tourDays;
@@ -48,10 +67,23 @@ class TontineTerms {
   /// Contribution of everyone for one day.
   int get dailyTotal => places * contributionPerPlace;
 
-  /// Day number of [day]: 1 on [firstDay], 0 or less before it.
-  int dayNumber(Day day) => firstDay.daysUntil(day) + 1;
+  /// Day number of [day]: 1 on [firstDay], 0 or less before it. A skipped day
+  /// keeps the number of the contribution day before it.
+  int dayNumber(Day day) {
+    final calendar = firstDay.daysUntil(day) + 1;
+    if (calendar <= 0) return calendar;
+    return calendar - skippedDays.where((s) => !s.isAfter(day)).length;
+  }
 
-  Day dayOf(int dayNumber) => firstDay.addDays(dayNumber - 1);
+  /// The calendar day of contribution day [dayNumber], skipped days left out.
+  Day dayOf(int dayNumber) {
+    var day = firstDay.addDays(dayNumber - 1);
+    for (final skipped in skippedDays) {
+      if (skipped.isAfter(day)) break;
+      day = day.addDays(1);
+    }
+    return day;
+  }
 
   /// Tour containing [dayNumber], clamped to the first and last tours.
   int tourOfDay(int dayNumber) {

@@ -2,6 +2,7 @@ import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
 import 'package:path_provider/path_provider.dart';
 
+import 'app_database.steps.dart';
 import 'tables.dart';
 
 part 'app_database.g.dart';
@@ -22,6 +23,7 @@ const databaseFileName = '$databaseName.sqlite';
     Payouts,
     PayoutCancellations,
     TourSwaps,
+    SkippedDays,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -41,10 +43,17 @@ class AppDatabase extends _$AppDatabase {
   /// On every schema change: bump this number, run
   /// `dart run drift_dev make-migrations`, then write the migration step.
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
+    onUpgrade: stepByStep(
+      from1To2: (m, schema) async {
+        // Skipped days (feasts, market closed).
+        await m.createTable(schema.skippedDay);
+        await m.createIndex(schema.skippedDayTontine);
+      },
+    ),
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON');
     },

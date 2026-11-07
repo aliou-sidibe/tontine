@@ -108,6 +108,7 @@ TontineOverview overviewOf(
       halves: member.halves,
       paid: member.paid,
       today: dayNumber,
+      yesterday: terms.dayNumber(today.addDays(-1)),
     );
     if (standing.kind == StandingKind.late) lateCount++;
     toRecover += organizerAdvance(

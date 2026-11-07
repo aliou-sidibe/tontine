@@ -12,6 +12,7 @@ import '../domain/day.dart';
 import '../domain/tontine_terms.dart';
 import '../payout/payout_page.dart';
 import '../share/share_statement.dart';
+import '../skips/skipped_days_page.dart';
 import 'swap_page.dart';
 
 enum TourStatus { done, current, next }
@@ -157,6 +158,13 @@ class ToursPage extends ConsumerWidget {
                   style: AppText.small,
                 ),
               ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+                child: _SkippedDaysRow(
+                  detail: detail,
+                  onTap: () => openSkippedDays(context, tontineId),
+                ),
+              ),
               Expanded(
                 child: ListView.separated(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -294,6 +302,78 @@ class _ShareButtonState extends ConsumerState<_ShareButton> {
       onPressed: _busy ? null : _share,
       icon: const Icon(Icons.ios_share, size: 18),
       label: const Text('Partager l’état (PDF) sur WhatsApp'),
+    );
+  }
+}
+
+/// Mockup "Jours sautés", board 4: "Jours sautés · 2", the days, and how far
+/// everything moved.
+class _SkippedDaysRow extends StatelessWidget {
+  const _SkippedDaysRow({required this.detail, required this.onTap});
+
+  final TontineDetail detail;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final terms = detail.terms;
+    final days = terms.skippedDays;
+    final end = terms.dayOf(terms.totalDays);
+    final shift = days.where((d) => !d.isAfter(end)).length;
+    final listed = [for (final d in days.take(3)) formatDay(d)];
+    if (days.length > 3) listed.add('…');
+    final subtitle = days.isEmpty
+        ? 'Fête, marché fermé : personne ne cotise ces jours-là'
+        : [
+            ...listed,
+            if (shift > 0)
+              'tout est décalé ${shift == 1 ? 'd’un jour' : 'de $shift jours'}',
+          ].join(' · ');
+    return RowCard(
+      onTap: onTap,
+      padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
+      child: Row(
+        spacing: 12,
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            decoration: const BoxDecoration(
+              color: AppColors.neutralPale,
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.event_busy_outlined,
+              size: 18,
+              color: AppColors.onNeutralPale,
+            ),
+          ),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              spacing: 1,
+              children: [
+                Text(
+                  days.isEmpty
+                      ? 'Jours sautés'
+                      : 'Jours sautés · ${days.length}',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.text,
+                  ),
+                ),
+                Text(subtitle, style: AppText.small),
+              ],
+            ),
+          ),
+          const Icon(
+            Icons.chevron_right,
+            size: 20,
+            color: AppColors.textTertiary,
+          ),
+        ],
+      ),
     );
   }
 }

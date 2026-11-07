@@ -6,7 +6,8 @@ Appli Android hors ligne de suivi de tontine. Le plan, les règles de calcul et 
 ## Maquette : à respecter à la lettre
 
 La maquette validée est la référence de chaque écran :
-https://claude.ai/artifact/Ke5yYbUMEtzGqQ5SgH9htd (8 écrans).
+https://claude.ai/artifact/Ke5yYbUMEtzGqQ5SgH9htd (8 écrans), complétée par la maquette des
+jours sautés : https://claude.ai/artifact/2ReCrN8RcBdE9jgmAcUrZx (6 écrans).
 
 - Avant de coder ou de modifier un écran de la maquette, **relire son fichier** (lecture de
   l'artefact, fichier `project/<Écran>.dc.html`) et reproduire **exactement** : textes,
